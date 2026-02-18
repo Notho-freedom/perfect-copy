@@ -1,13 +1,22 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Layout } from "@/components/Layout";
+import { ScanPage } from "@/components/ScanPage";
+import { BoostPage } from "@/components/BoostPage";
+import { ToolsPage } from "@/components/ToolsPage";
+import { ActionCenterPage } from "@/components/ActionCenterPage";
+
+type Page = "scan" | "boost" | "tools" | "action-center";
 
 const Index = () => {
+  const [currentPage, setCurrentPage] = useState<Page>("scan");
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <Layout currentPage={currentPage} onPageChange={setCurrentPage}>
+      {currentPage === "scan" && <ScanPage />}
+      {currentPage === "boost" && <BoostPage />}
+      {currentPage === "tools" && <ToolsPage />}
+      {currentPage === "action-center" && <ActionCenterPage />}
+    </Layout>
   );
 };
 
