@@ -1,102 +1,146 @@
 import { useState } from "react";
 
-interface BoostCard {
-  title: string;
-  icon: string;
-  status: string;
-  statusColor: string;
-  buttonLabel: string;
-  description: string;
-  hasConfig?: boolean;
-}
-
-const boostCards: BoostCard[] = [
-  {
-    title: "Game Boost",
-    icon: "🎮",
-    status: "OFF",
-    statusColor: "text-gray-400",
-    buttonLabel: "Super Boost",
-    description: "Boost PC for a better gaming experience by stopping unnecessary services and optimizing system settings.",
-    hasConfig: true,
-  },
-  {
-    title: "Internet Boost",
-    icon: "🌐",
-    status: "Ready",
-    statusColor: "text-green-400",
-    buttonLabel: "Boost Now",
-    description: "Optimize internet settings to improve download speed and reduce latency for a smoother online experience.",
-  },
-  {
-    title: "System Optimize",
-    icon: "⚡",
-    status: "Not Checked",
-    statusColor: "text-yellow-400",
-    buttonLabel: "Check Now",
-    description: "Analyze system performance and clean up junk files, invalid registry entries, and startup items.",
-  },
-];
-
 export function BoostPage() {
-  const [states, setStates] = useState<Record<string, string>>({
-    "Game Boost": "OFF",
-    "Internet Boost": "Ready",
-    "System Optimize": "Not Checked",
-  });
-
-  const handleAction = (title: string) => {
-    setStates(prev => ({
-      ...prev,
-      [title]: prev[title] === "OFF" ? "ON" : prev[title] === "Ready" ? "Boosted ✓" : "Optimized ✓",
-    }));
-  };
+  const [gameBoostOn, setGameBoostOn] = useState(false);
 
   return (
-    <div className="flex-1 p-6">
-      <h2 className="text-lg font-semibold text-gray-200 mb-5">Performance Boost</h2>
-      <div className="grid grid-cols-3 gap-4">
-        {boostCards.map(card => {
-          const currentStatus = states[card.title] || card.status;
-          const isActive = currentStatus === "ON" || currentStatus === "Boosted ✓" || currentStatus === "Optimized ✓";
-          return (
-            <div key={card.title} className="rounded-lg p-5 flex flex-col items-center text-center gap-4 border border-border transition-colors hover:border-gray-600"
-              style={{ background: "hsl(220 14% 15%)" }}>
-              {/* Gauge area */}
-              <div className="relative w-24 h-24">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(220 12% 22%)" strokeWidth="5" />
-                  <circle cx="50" cy="50" r="42" fill="none"
-                    stroke={isActive ? "hsl(140 60% 45%)" : "hsl(220 12% 30%)"}
-                    strokeWidth="5" strokeDasharray={264} strokeDashoffset={isActive ? 0 : 180}
-                    strokeLinecap="round" className="transition-all duration-700 -rotate-90 origin-center" />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center text-3xl">{card.icon}</div>
-              </div>
+    <div className="flex-1 flex items-center justify-center p-8">
+      <div className="grid grid-cols-3 gap-4 w-full max-w-[820px]">
+        {/* Game Boost */}
+        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4" style={{
+          background: "hsl(220 14% 14%)",
+          border: "1px solid hsl(220 10% 20%)",
+        }}>
+          {/* Gauge SVG */}
+          <div className="relative w-32 h-32">
+            <svg viewBox="0 0 120 120" className="w-full h-full">
+              {/* Outer ring */}
+              <circle cx="60" cy="60" r="55" fill="none" stroke="hsl(220 10% 20%)" strokeWidth="2" />
+              <circle cx="60" cy="60" r="48" fill="none" stroke="hsl(220 10% 18%)" strokeWidth="1" />
+              {/* Gauge arc background */}
+              <path d="M 20 85 A 45 45 0 1 1 100 85" fill="none" stroke="hsl(220 12% 22%)" strokeWidth="4" strokeLinecap="round" />
+              {/* Gauge arc fill */}
+              <path d="M 20 85 A 45 45 0 1 1 100 85" fill="none"
+                stroke={gameBoostOn ? "hsl(140 60% 45%)" : "hsl(220 12% 30%)"}
+                strokeWidth="4" strokeLinecap="round"
+                strokeDasharray="220" strokeDashoffset={gameBoostOn ? 0 : 180}
+                className="transition-all duration-700"
+              />
+              {/* Tick marks */}
+              {Array.from({ length: 20 }).map((_, i) => {
+                const angle = -210 + (i / 19) * 240;
+                const rad = (angle * Math.PI) / 180;
+                const r1 = 42;
+                const r2 = 46;
+                return (
+                  <line key={i} x1={60 + r1 * Math.cos(rad)} y1={60 + r1 * Math.sin(rad)}
+                    x2={60 + r2 * Math.cos(rad)} y2={60 + r2 * Math.sin(rad)}
+                    stroke="hsl(0 0% 35%)" strokeWidth="1" />
+                );
+              })}
+              {/* Needle */}
+              {(() => {
+                const needleAngle = gameBoostOn ? 30 : -210;
+                const rad = (needleAngle * Math.PI) / 180;
+                return (
+                  <line x1="60" y1="60" x2={60 + 30 * Math.cos(rad)} y2={60 + 30 * Math.sin(rad)}
+                    stroke="white" strokeWidth="2" strokeLinecap="round" className="transition-all duration-700" />
+                );
+              })()}
+              {/* Center dot */}
+              <circle cx="60" cy="60" r="4" fill="hsl(0 0% 50%)" />
+              <circle cx="60" cy="60" r="2" fill="white" />
+            </svg>
+          </div>
 
-              <div>
-                <h3 className="text-sm font-semibold text-gray-200">{card.title}</h3>
-                <span className={`text-xs ${isActive ? "text-green-400" : card.statusColor}`}>{currentStatus}</span>
-                {card.hasConfig && (
-                  <button className="block text-[10px] text-blue-400 hover:underline mx-auto mt-1">Configure</button>
-                )}
-              </div>
+          <span className={`text-sm font-bold ${gameBoostOn ? "text-green-400" : "text-muted-foreground"}`}>
+            {gameBoostOn ? "ON" : "OFF"}
+          </span>
 
-              <p className="text-[11px] text-gray-500 leading-relaxed">{card.description}</p>
+          <h3 className="text-base font-bold text-foreground">Game Boost</h3>
 
-              <button
-                onClick={() => handleAction(card.title)}
-                className={`mt-auto px-5 py-2 rounded text-sm font-semibold transition-colors ${
-                  isActive
-                    ? "bg-green-600/20 text-green-400 border border-green-600/30"
-                    : "bg-red-600 hover:bg-red-700 text-white"
-                }`}
-              >
-                {isActive ? "Active" : card.buttonLabel}
-              </button>
+          {/* Button with dropdown arrow */}
+          <div className="flex items-center gap-0 w-full max-w-[180px]">
+            <button onClick={() => setGameBoostOn(!gameBoostOn)}
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded-l transition-colors">
+              Super Boost
+            </button>
+            <button className="bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 px-2 rounded-r border-l border-white/20 transition-colors">
+              <svg className="w-3 h-3" viewBox="0 0 12 12" fill="currentColor"><path d="M3 5l3 3 3-3z" /></svg>
+            </button>
+          </div>
+
+          <button className="text-xs text-muted-foreground hover:text-foreground underline transition-colors">Configure</button>
+
+          <p className="text-[11px] text-muted-foreground leading-relaxed mt-auto">
+            Install Smart Game Booster to overclock hardware to improve game performance up to 130%.
+          </p>
+        </div>
+
+        {/* Internet Boost */}
+        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4" style={{
+          background: "hsl(220 14% 14%)",
+          border: "1px solid hsl(220 10% 20%)",
+        }}>
+          {/* Globe icon */}
+          <div className="relative w-32 h-32 flex items-center justify-center">
+            <svg viewBox="0 0 120 120" className="w-full h-full">
+              <circle cx="60" cy="60" r="55" fill="none" stroke="hsl(220 10% 20%)" strokeWidth="2" />
+              <circle cx="60" cy="60" r="48" fill="none" stroke="hsl(220 10% 18%)" strokeWidth="1" />
+              {/* Globe */}
+              <circle cx="60" cy="55" r="22" fill="none" stroke="hsl(0 0% 50%)" strokeWidth="1.5" />
+              <ellipse cx="60" cy="55" rx="10" ry="22" fill="none" stroke="hsl(0 0% 40%)" strokeWidth="1" />
+              <line x1="38" y1="50" x2="82" y2="50" stroke="hsl(0 0% 35%)" strokeWidth="0.8" />
+              <line x1="38" y1="60" x2="82" y2="60" stroke="hsl(0 0% 35%)" strokeWidth="0.8" />
+              {/* Shield overlay */}
+              <path d="M60 38 L72 45 L72 60 Q72 70 60 78 Q48 70 48 60 L48 45 Z" fill="none" stroke="hsl(0 0% 55%)" strokeWidth="1.5" />
+            </svg>
+            {/* Info dot */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+              <span className="text-white text-[9px] font-bold">i</span>
             </div>
-          );
-        })}
+          </div>
+
+          <h3 className="text-base font-bold text-foreground">Internet Boost</h3>
+
+          <button className="w-full max-w-[180px] bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded transition-colors">
+            Boost Now
+          </button>
+
+          <p className="text-[11px] text-muted-foreground leading-relaxed mt-auto">
+            Install iTop VPN to boost and secure your Internet connection.
+          </p>
+        </div>
+
+        {/* System Optimize */}
+        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4" style={{
+          background: "hsl(220 14% 14%)",
+          border: "1px solid hsl(220 10% 20%)",
+        }}>
+          {/* Shield/check icon */}
+          <div className="relative w-32 h-32 flex items-center justify-center">
+            <svg viewBox="0 0 120 120" className="w-full h-full">
+              <circle cx="60" cy="60" r="55" fill="none" stroke="hsl(220 10% 20%)" strokeWidth="2" />
+              <circle cx="60" cy="60" r="48" fill="none" stroke="hsl(220 10% 18%)" strokeWidth="1" />
+              {/* Checkmark shield */}
+              <path d="M60 30 L80 40 L80 62 Q80 78 60 90 Q40 78 40 62 L40 40 Z" fill="none" stroke="hsl(0 0% 50%)" strokeWidth="2" />
+              <path d="M48 58 L56 66 L72 50" fill="none" stroke="hsl(0 0% 45%)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+              <span className="text-white text-[9px] font-bold">i</span>
+            </div>
+          </div>
+
+          <h3 className="text-base font-bold text-foreground">System Optimize</h3>
+
+          <button className="w-full max-w-[180px] bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded transition-colors">
+            Check Now
+          </button>
+
+          <p className="text-[11px] text-muted-foreground leading-relaxed mt-auto">
+            Junk files, privacy traces, etc. are not good for PC. Please check if there is any on your PC now.
+          </p>
+        </div>
       </div>
     </div>
   );

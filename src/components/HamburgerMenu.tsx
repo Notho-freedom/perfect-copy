@@ -1,17 +1,20 @@
-import { X, Settings, History, RefreshCw, BookOpen, Headphones, Languages, Sparkles, Info, Palette } from "lucide-react";
+import { ArrowLeft, Settings, History, RefreshCw, BookOpen, Headphones, Languages, Sparkles, Star, Palette } from "lucide-react";
 
 const menuItems = [
-  { icon: <Settings className="w-4 h-4" />, label: "Settings" },
-  { icon: <History className="w-4 h-4" />, label: "Driver Update History" },
-  { icon: <RefreshCw className="w-4 h-4" />, label: "Check for Updates" },
-  { icon: <BookOpen className="w-4 h-4" />, label: "User Manual" },
-  { icon: <Headphones className="w-4 h-4" />, label: "Technical Support" },
-  { icon: <Languages className="w-4 h-4" />, label: "Help Us Translate" },
-  { icon: <Sparkles className="w-4 h-4" />, label: "What's New" },
-  { icon: <Info className="w-4 h-4" />, label: "About" },
+  { icon: <Settings className="w-4 h-4" />, label: "Settings...", color: "text-muted-foreground" },
+  { icon: <History className="w-4 h-4" />, label: "Driver Update History", color: "text-blue-400" },
+  { icon: <RefreshCw className="w-4 h-4" />, label: "Check for Updates", color: "text-green-400" },
+  { icon: <BookOpen className="w-4 h-4" />, label: "User Manual (F1)", color: "text-blue-400" },
+  { icon: <Headphones className="w-4 h-4" />, label: "Technical Support", color: "text-yellow-400" },
+  { icon: <Languages className="w-4 h-4" />, label: "Help Us Translate", color: "text-orange-400" },
+  { icon: <Sparkles className="w-4 h-4" />, label: "What's New", color: "text-blue-400" },
+  { icon: <Star className="w-4 h-4" />, label: "About", color: "text-yellow-400" },
 ];
 
-const skinColors = ["#e53e3e", "#dd6b20", "#d69e2e", "#38a169", "#3182ce", "#805ad5", "#d53f8c"];
+const skinColors = [
+  "hsl(210 80% 50%)", "hsl(200 70% 45%)", "hsl(340 60% 40%)", "hsl(320 50% 35%)",
+  "hsl(280 50% 40%)", "hsl(160 60% 40%)", "hsl(100 50% 40%)", "hsl(180 60% 40%)",
+];
 
 interface HamburgerMenuProps {
   open: boolean;
@@ -23,43 +26,51 @@ export function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
-      <div className="fixed top-0 left-0 h-full w-72 z-50 flex flex-col shadow-2xl animate-slide-in-right"
-        style={{ background: "hsl(220 16% 10%)" }}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-[9px] font-bold text-white">DB</div>
-            <span className="text-sm font-semibold text-gray-200">Menu</span>
-          </div>
+      <div className="fixed inset-0 bg-black/60 z-50 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="fixed top-0 left-0 h-full w-[260px] z-50 flex flex-col shadow-2xl animate-slide-in-left"
+        style={{ background: "hsl(220 18% 9%)" }}>
+        {/* Header — back arrow */}
+        <div className="flex items-center px-4 py-3.5" style={{ borderBottom: "1px solid hsl(220 10% 16%)" }}>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/10 transition-colors">
-            <X className="w-4 h-4 text-gray-400" />
+            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
         {/* Menu items */}
         <div className="flex-1 overflow-auto py-2">
           {menuItems.map(item => (
-            <button key={item.label} className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors text-left">
-              <span className="text-gray-500">{item.icon}</span>
+            <button key={item.label} className="w-full flex items-center gap-3.5 px-5 py-3 text-sm text-foreground/80 hover:bg-white/5 hover:text-foreground transition-colors text-left">
+              <span className={item.color}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
         </div>
 
         {/* Skin section */}
-        <div className="p-4 border-t border-white/10">
+        <div className="px-4 py-4" style={{ borderTop: "1px solid hsl(220 10% 16%)" }}>
           <div className="flex items-center gap-2 mb-3">
-            <Palette className="w-4 h-4 text-gray-500" />
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Skin</span>
+            <span className="text-xs font-bold text-blue-400 tracking-wide">Skin</span>
           </div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-16 h-10 rounded border border-white/10" style={{ background: "linear-gradient(135deg, hsl(220 16% 10%), hsl(220 14% 16%))" }} />
-            <span className="text-[11px] text-gray-500">Current Theme</span>
+
+          {/* Theme preview */}
+          <div className="mb-3 flex flex-col items-center">
+            <div className="w-28 h-20 rounded border-2 border-primary/60 overflow-hidden" style={{
+              background: "linear-gradient(135deg, hsl(220 18% 9%), hsl(220 14% 14%))"
+            }}>
+              <div className="w-full h-3" style={{ background: "hsl(220 16% 7%)" }} />
+              <div className="flex h-[calc(100%-12px)]">
+                <div className="w-5" style={{ background: "hsl(220 16% 7%)" }} />
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full" style={{ background: "radial-gradient(hsl(0 60% 30%), hsl(0 40% 15%))" }} />
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] text-muted-foreground mt-1.5">Black</span>
           </div>
-          <div className="flex gap-1.5">
+
+          <div className="flex gap-1.5 flex-wrap">
             {skinColors.map(color => (
-              <button key={color} className="w-5 h-5 rounded-full border-2 border-transparent hover:border-white/40 transition-colors" style={{ background: color }} />
+              <button key={color} className="w-5 h-5 rounded border border-white/10 hover:border-white/40 transition-colors" style={{ background: color }} />
             ))}
           </div>
         </div>
