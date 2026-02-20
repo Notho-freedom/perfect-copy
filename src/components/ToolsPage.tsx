@@ -1,80 +1,135 @@
-import { Shield, Volume2, AlertTriangle, Trash2, Wifi, Monitor, Wrench, Download, Cpu, Globe, Video } from "lucide-react";
-
-const hotFixTools = [
-  { icon: <Shield className="w-5 h-5" />, title: "Backup & Restore", desc: "Backup drivers before updating for safe rollback", color: "text-blue-400" },
-  { icon: <Volume2 className="w-5 h-5" />, title: "Fix No Sound", desc: "Automatically detect and fix audio issues", color: "text-green-400" },
-  { icon: <AlertTriangle className="w-5 h-5" />, title: "Fix Device Error", desc: "3 issues found", color: "text-yellow-400", count: 3 },
-];
-
-const sideActions = [
-  { icon: <Trash2 className="w-4 h-4" />, title: "Clean Invalid Device Data", detail: "12 items", color: "text-orange-400" },
-  { icon: <Wifi className="w-4 h-4" />, title: "Fix Network Failure", detail: "", color: "text-blue-400" },
-  { icon: <Monitor className="w-4 h-4" />, title: "Fix Bad Resolution", detail: "", color: "text-purple-400" },
-];
-
-const otherTools = [
-  { icon: <Wrench className="w-5 h-5" />, title: "Fix Incompatible Drivers", isNew: false },
-  { icon: <Download className="w-5 h-5" />, title: "Offline Driver Updater", isNew: false },
-  { icon: <Cpu className="w-5 h-5" />, title: "System Information", isNew: false },
-  { icon: <Globe className="w-5 h-5" />, title: "Free & Fast VPN", isNew: true },
-  { icon: <Video className="w-5 h-5" />, title: "Screen Recorder", isNew: true },
-];
-
 export function ToolsPage() {
   return (
     <div className="flex-1 p-6 overflow-auto">
-      <h2 className="text-lg font-semibold text-gray-200 mb-4">Tools</h2>
+      {/* Hot Fix Tools */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1 h-4 bg-primary rounded-full" />
+        <h2 className="text-sm font-bold text-foreground">Hot Fix Tools:</h2>
+      </div>
 
-      <div className="flex gap-4 mb-6">
-        {/* Hot Fix Tools */}
-        <div className="flex-1">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Hot Fix Tools</h3>
-          <div className="space-y-2">
-            {hotFixTools.map(tool => (
-              <div key={tool.title} className="flex items-center gap-3 rounded-lg p-3 border border-border hover:border-gray-600 transition-colors cursor-pointer"
-                style={{ background: "hsl(220 14% 15%)" }}>
-                <div className={tool.color}>{tool.icon}</div>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-200 font-medium">{tool.title}</div>
-                  <div className="text-[11px] text-gray-500">{tool.desc}</div>
-                </div>
-                {tool.count && (
-                  <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-bold">{tool.count}</span>
-                )}
-              </div>
-            ))}
+      <div className="flex gap-4 mb-8">
+        {/* Hot fix cards */}
+        <div className="flex gap-3 flex-1">
+          {/* Backup & Restore */}
+          <div className="flex-1 rounded-lg p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors" style={{
+            background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
+          }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "hsl(220 12% 18%)" }}>
+              <svg className="w-7 h-7 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+              </svg>
+            </div>
+            <span className="text-xs text-foreground font-medium text-center">Backup & Restore</span>
+          </div>
+
+          {/* Fix No Sound */}
+          <div className="flex-1 rounded-lg p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors" style={{
+            background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
+          }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "hsl(220 12% 18%)" }}>
+              <svg className="w-7 h-7 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
+              </svg>
+            </div>
+            <span className="text-xs text-foreground font-medium text-center">Fix No Sound</span>
+          </div>
+
+          {/* Fix Device Error */}
+          <div className="flex-1 rounded-lg p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors relative" style={{
+            background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
+          }}>
+            {/* PRO badge */}
+            <div className="diagonal-badge diagonal-badge-pro" />
+            <span className="diagonal-badge-text" style={{ top: '4px', left: '2px', fontSize: '7px' }}>PRO</span>
+
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "hsl(220 12% 18%)" }}>
+              <svg className="w-7 h-7 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+            </div>
+            <span className="text-xs text-foreground font-medium text-center">Fix Device Error</span>
+            <span className="text-[11px] text-primary font-semibold">1 issue</span>
           </div>
         </div>
 
         {/* Side actions */}
-        <div className="w-56 shrink-0">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h3>
-          <div className="space-y-2">
-            {sideActions.map(action => (
-              <button key={action.title} className="w-full flex items-center gap-2 rounded-lg p-3 border border-border hover:border-gray-600 transition-colors text-left"
-                style={{ background: "hsl(220 14% 15%)" }}>
-                <div className={action.color}>{action.icon}</div>
-                <div>
-                  <div className="text-xs text-gray-200">{action.title}</div>
-                  {action.detail && <div className="text-[10px] text-gray-500">{action.detail}</div>}
-                </div>
-              </button>
-            ))}
+        <div className="w-56 shrink-0 space-y-2">
+          <div className="rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors" style={{
+            background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
+          }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(220 12% 18%)" }}>
+              <svg className="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" /><line x1="18" y1="9" x2="12" y2="15" /><line x1="12" y1="9" x2="18" y2="15" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-xs text-foreground font-medium">Clean Invalid Device Da...</div>
+              <div className="text-[11px] text-primary font-semibold">59 devices</div>
+            </div>
+          </div>
+
+          <div className="rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors" style={{
+            background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
+          }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(220 12% 18%)" }}>
+              <svg className="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+              </svg>
+            </div>
+            <div className="text-xs text-foreground font-medium">Fix Network Failure</div>
+          </div>
+
+          <div className="rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors" style={{
+            background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
+          }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(220 12% 18%)" }}>
+              <svg className="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+            </div>
+            <div className="text-xs text-foreground font-medium">Fix Bad Resolution</div>
           </div>
         </div>
       </div>
 
       {/* Other Useful Tools */}
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Other Useful Tools</h3>
-      <div className="grid grid-cols-3 gap-2">
-        {otherTools.map(tool => (
-          <div key={tool.title} className="flex items-center gap-3 rounded-lg p-3 border border-border hover:border-gray-600 transition-colors cursor-pointer relative"
-            style={{ background: "hsl(220 14% 15%)" }}>
-            <div className="text-gray-400">{tool.icon}</div>
-            <span className="text-sm text-gray-300">{tool.title}</span>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-1 h-4 bg-primary rounded-full" />
+        <h2 className="text-sm font-bold text-foreground">Other Useful Tools:</h2>
+      </div>
+
+      <div className="grid grid-cols-5 gap-3">
+        {[
+          { label: "Fix Incompatible Drivers", isNew: false, icon: "wrench" },
+          { label: "Offline Driver Updater", isNew: false, icon: "download" },
+          { label: "System Information", isNew: false, icon: "cpu" },
+          { label: "Free & Fast VPN", isNew: true, icon: "shield" },
+          { label: "Screen Recorder", isNew: true, icon: "rec" },
+        ].map(tool => (
+          <div key={tool.label} className="rounded-lg p-5 flex flex-col items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors relative overflow-hidden" style={{
+            background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
+          }}>
             {tool.isNew && (
-              <span className="absolute top-1.5 right-1.5 text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">NEW</span>
+              <>
+                <div className="absolute top-0 right-0 w-0 h-0" style={{
+                  borderStyle: "solid",
+                  borderWidth: "0 40px 40px 0",
+                  borderColor: "transparent hsl(140 60% 40%) transparent transparent",
+                }} />
+                <span className="absolute top-[8px] right-[2px] text-[8px] font-bold text-white transform rotate-45">NEW</span>
+              </>
             )}
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "hsl(220 12% 18%)" }}>
+              <svg className="w-6 h-6 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                {tool.icon === "wrench" && <><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></>}
+                {tool.icon === "download" && <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>}
+                {tool.icon === "cpu" && <><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" /><line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" /><line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="14" x2="23" y2="14" /><line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="14" x2="4" y2="14" /></>}
+                {tool.icon === "shield" && <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>}
+                {tool.icon === "rec" && <><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" fill="currentColor" /></>}
+              </svg>
+            </div>
+            <span className="text-xs text-foreground font-medium text-center leading-tight">{tool.label}</span>
           </div>
         ))}
       </div>
