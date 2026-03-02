@@ -4,29 +4,25 @@ export function BoostPage() {
   const [gameBoostOn, setGameBoostOn] = useState(false);
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8">
+    <div className="flex-1 flex items-center justify-center p-8 animate-fade-in">
       <div className="grid grid-cols-3 gap-4 w-full max-w-[820px]">
         {/* Game Boost */}
-        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4" style={{
+        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4 transition-all duration-300 hover:bg-white/[0.03]" style={{
           background: "hsl(220 14% 14%)",
           border: "1px solid hsl(220 10% 20%)",
         }}>
           {/* Gauge SVG */}
           <div className="relative w-32 h-32">
             <svg viewBox="0 0 120 120" className="w-full h-full">
-              {/* Outer ring */}
               <circle cx="60" cy="60" r="55" fill="none" stroke="hsl(220 10% 20%)" strokeWidth="2" />
               <circle cx="60" cy="60" r="48" fill="none" stroke="hsl(220 10% 18%)" strokeWidth="1" />
-              {/* Gauge arc background */}
               <path d="M 20 85 A 45 45 0 1 1 100 85" fill="none" stroke="hsl(220 12% 22%)" strokeWidth="4" strokeLinecap="round" />
-              {/* Gauge arc fill */}
               <path d="M 20 85 A 45 45 0 1 1 100 85" fill="none"
                 stroke={gameBoostOn ? "hsl(140 60% 45%)" : "hsl(220 12% 30%)"}
                 strokeWidth="4" strokeLinecap="round"
                 strokeDasharray="220" strokeDashoffset={gameBoostOn ? 0 : 180}
                 className="transition-all duration-700"
               />
-              {/* Tick marks */}
               {Array.from({ length: 20 }).map((_, i) => {
                 const angle = -210 + (i / 19) * 240;
                 const rad = (angle * Math.PI) / 180;
@@ -38,7 +34,6 @@ export function BoostPage() {
                     stroke="hsl(0 0% 35%)" strokeWidth="1" />
                 );
               })}
-              {/* Needle */}
               {(() => {
                 const needleAngle = gameBoostOn ? 30 : -210;
                 const rad = (needleAngle * Math.PI) / 180;
@@ -47,25 +42,24 @@ export function BoostPage() {
                     stroke="white" strokeWidth="2" strokeLinecap="round" className="transition-all duration-700" />
                 );
               })()}
-              {/* Center dot */}
               <circle cx="60" cy="60" r="4" fill="hsl(0 0% 50%)" />
               <circle cx="60" cy="60" r="2" fill="white" />
             </svg>
           </div>
 
-          <span className={`text-sm font-bold ${gameBoostOn ? "text-green-400" : "text-muted-foreground"}`}>
+          <span className={`text-sm font-bold transition-colors duration-300 ${gameBoostOn ? "text-green-400" : "text-muted-foreground"}`}>
             {gameBoostOn ? "ON" : "OFF"}
           </span>
 
           <h3 className="text-base font-bold text-foreground">Game Boost</h3>
 
-          {/* Button with dropdown arrow */}
-          <div className="flex items-center gap-0 w-full max-w-[180px]">
+          {/* Button with dropdown — SAME height, synchronized */}
+          <div className="flex items-stretch w-full max-w-[180px] rounded overflow-hidden">
             <button onClick={() => setGameBoostOn(!gameBoostOn)}
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded-l transition-colors">
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 transition-colors">
               Super Boost
             </button>
-            <button className="bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 px-2 rounded-r border-l border-white/20 transition-colors">
+            <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-2.5 border-l border-white/20 transition-colors flex items-center">
               <svg className="w-3 h-3" viewBox="0 0 12 12" fill="currentColor"><path d="M3 5l3 3 3-3z" /></svg>
             </button>
           </div>
@@ -78,24 +72,20 @@ export function BoostPage() {
         </div>
 
         {/* Internet Boost */}
-        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4" style={{
+        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4 transition-all duration-300 hover:bg-white/[0.03]" style={{
           background: "hsl(220 14% 14%)",
           border: "1px solid hsl(220 10% 20%)",
         }}>
-          {/* Globe icon */}
           <div className="relative w-32 h-32 flex items-center justify-center">
             <svg viewBox="0 0 120 120" className="w-full h-full">
               <circle cx="60" cy="60" r="55" fill="none" stroke="hsl(220 10% 20%)" strokeWidth="2" />
               <circle cx="60" cy="60" r="48" fill="none" stroke="hsl(220 10% 18%)" strokeWidth="1" />
-              {/* Globe */}
               <circle cx="60" cy="55" r="22" fill="none" stroke="hsl(0 0% 50%)" strokeWidth="1.5" />
               <ellipse cx="60" cy="55" rx="10" ry="22" fill="none" stroke="hsl(0 0% 40%)" strokeWidth="1" />
               <line x1="38" y1="50" x2="82" y2="50" stroke="hsl(0 0% 35%)" strokeWidth="0.8" />
               <line x1="38" y1="60" x2="82" y2="60" stroke="hsl(0 0% 35%)" strokeWidth="0.8" />
-              {/* Shield overlay */}
               <path d="M60 38 L72 45 L72 60 Q72 70 60 78 Q48 70 48 60 L48 45 Z" fill="none" stroke="hsl(0 0% 55%)" strokeWidth="1.5" />
             </svg>
-            {/* Info dot */}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
               <span className="text-white text-[9px] font-bold">i</span>
             </div>
@@ -103,7 +93,7 @@ export function BoostPage() {
 
           <h3 className="text-base font-bold text-foreground">Internet Boost</h3>
 
-          <button className="w-full max-w-[180px] bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded transition-colors">
+          <button className="w-full max-w-[180px] bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded transition-all duration-200 hover:shadow-lg hover:shadow-primary/30">
             Boost Now
           </button>
 
@@ -113,16 +103,14 @@ export function BoostPage() {
         </div>
 
         {/* System Optimize */}
-        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4" style={{
+        <div className="rounded-lg flex flex-col items-center text-center p-6 gap-4 transition-all duration-300 hover:bg-white/[0.03]" style={{
           background: "hsl(220 14% 14%)",
           border: "1px solid hsl(220 10% 20%)",
         }}>
-          {/* Shield/check icon */}
           <div className="relative w-32 h-32 flex items-center justify-center">
             <svg viewBox="0 0 120 120" className="w-full h-full">
               <circle cx="60" cy="60" r="55" fill="none" stroke="hsl(220 10% 20%)" strokeWidth="2" />
               <circle cx="60" cy="60" r="48" fill="none" stroke="hsl(220 10% 18%)" strokeWidth="1" />
-              {/* Checkmark shield */}
               <path d="M60 30 L80 40 L80 62 Q80 78 60 90 Q40 78 40 62 L40 40 Z" fill="none" stroke="hsl(0 0% 50%)" strokeWidth="2" />
               <path d="M48 58 L56 66 L72 50" fill="none" stroke="hsl(0 0% 45%)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -133,7 +121,7 @@ export function BoostPage() {
 
           <h3 className="text-base font-bold text-foreground">System Optimize</h3>
 
-          <button className="w-full max-w-[180px] bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded transition-colors">
+          <button className="w-full max-w-[180px] bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded transition-all duration-200 hover:shadow-lg hover:shadow-primary/30">
             Check Now
           </button>
 
