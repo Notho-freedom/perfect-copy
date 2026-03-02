@@ -164,4 +164,19 @@
   .tick-ring {
     position: relative;
   }
+
+  /* Ultra-thin scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 30% / 0.4);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 40% / 0.6);
+  }
 }
