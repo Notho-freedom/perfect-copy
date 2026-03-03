@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { outdatedDrivers, upToDateDrivers, scanDriverNames, Driver } from "@/data/drivers";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronUp, Monitor, Volume2, Wifi, HardDrive, Mouse, Network, Usb, Info, Search, ChevronRight, PanelRightOpen, PanelRightClose, X, Check, Crown, Shield, Zap, Star, ArrowLeft } from "lucide-react";
+import { ChevronDown, ChevronUp, Monitor, Volume2, Wifi, HardDrive, Mouse, Network, Usb, Info, Search, ChevronRight, X, Check, Crown, Shield, Zap, Star, ArrowLeft, RotateCcw, Trash2, EyeOff, Cpu, MemoryStick } from "lucide-react";
 
 type ScanState = "idle" | "scanning" | "results-list" | "updating" | "update-complete";
 
@@ -15,8 +15,8 @@ const iconMap: Record<string, React.ReactNode> = {
   Mouse: <Mouse className="w-4 h-4" />,
 };
 
-/* Tick marks around the circle */
-function TickMarks({ radius, count }: { radius: number; count: number }) {
+/* Tick marks around the circle — lights up based on progress */
+function TickMarks({ radius, count, progress = 0 }: { radius: number; count: number; progress?: number }) {
   const ticks = [];
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * 360;
@@ -24,11 +24,15 @@ function TickMarks({ radius, count }: { radius: number; count: number }) {
     const r1 = radius - (isLong ? 8 : 5);
     const r2 = radius;
     const rad = (angle * Math.PI) / 180;
+    const progressAngle = (progress / 100) * 360;
+    const isLit = progress > 0 && angle <= progressAngle;
     ticks.push(
       <line key={i}
         x1={75 + r1 * Math.cos(rad)} y1={75 + r1 * Math.sin(rad)}
         x2={75 + r2 * Math.cos(rad)} y2={75 + r2 * Math.sin(rad)}
-        stroke={isLong ? "hsl(0 0% 45%)" : "hsl(0 0% 30%)"} strokeWidth={isLong ? 1.5 : 0.8}
+        stroke={isLit ? "hsl(0 0% 90%)" : isLong ? "hsl(0 0% 45%)" : "hsl(0 0% 30%)"}
+        strokeWidth={isLong ? 1.5 : 0.8}
+        className="transition-all duration-150"
       />
     );
   }
@@ -36,12 +40,12 @@ function TickMarks({ radius, count }: { radius: number; count: number }) {
 }
 
 /* The 3D concentric circle button */
-function ScanButton({ label, onClick, glowing = true }: { label: string; onClick: () => void; glowing?: boolean }) {
+function ScanButton({ label, onClick, glowing = true, progress = 0 }: { label: string; onClick: () => void; glowing?: boolean; progress?: number }) {
   return (
     <div className="relative w-52 h-52 cursor-pointer group transition-transform duration-300 hover:scale-105 active:scale-95" onClick={onClick}>
       <div className="absolute inset-0 rounded-full metallic-ring shadow-xl" />
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 150 150">
-        <TickMarks radius={72} count={60} />
+        <TickMarks radius={72} count={60} progress={progress} />
       </svg>
       <div className="absolute inset-[8px] rounded-full" style={{ background: "hsl(220 15% 10%)" }} />
       <div className="absolute inset-[12px] rounded-full transition-all duration-500" style={{
@@ -50,7 +54,17 @@ function ScanButton({ label, onClick, glowing = true }: { label: string; onClick
           ? "0 0 30px 8px hsl(0 72% 51% / 0.5), 0 0 60px 15px hsl(0 72% 51% / 0.3), inset 0 -10px 30px hsl(0 50% 10% / 0.8), inset 0 5px 15px hsl(0 80% 50% / 0.3)"
           : "inset 0 -10px 30px hsl(0 50% 10% / 0.8), inset 0 5px 15px hsl(0 80% 50% / 0.2)",
       }} />
-      <div className="absolute inset-[28px] rounded-full flex items-center justify-center" style={{
+      {progress > 0 && (
+        <svg className="absolute inset-[8px] w-[calc(100%-16px)] h-[calc(100%-16px)] -rotate-90" viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="68" fill="none" stroke="hsl(0 50% 15% / 0.5)" strokeWidth="4" />
+          <circle cx="75" cy="75" r="68" fill="none" stroke="hsl(0 72% 51%)"
+            strokeWidth="4" strokeDasharray={427} strokeDashoffset={427 - (progress / 100) * 427}
+            strokeLinecap="round" className="transition-all duration-200"
+            style={{ filter: "drop-shadow(0 0 6px hsl(0 72% 51% / 0.8))" }}
+          />
+        </svg>
+      )}
+      <div className="absolute inset-[28px] rounded-full flex flex-col items-center justify-center" style={{
         background: "radial-gradient(circle at 50% 35%, hsl(0 60% 25%), hsl(0 50% 15%) 50%, hsl(220 20% 8%) 100%)",
         boxShadow: "inset 0 2px 10px hsl(0 80% 40% / 0.4), inset 0 -5px 15px hsl(0 0% 0% / 0.6)"
       }}>
@@ -63,107 +77,199 @@ function ScanButton({ label, onClick, glowing = true }: { label: string; onClick
   );
 }
 
-/* PC Info Panel — mini, centered vertically on the right edge */
+/* PC Info Panel — mini centered on right edge, expands to full system info dialog */
 function PCInfoPanel() {
   const [expanded, setExpanded] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("Global");
 
+  const categories = [
+    { id: "Global", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
+    { id: "Système d'Exploitation", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
+    { id: "Processeur et Carte Mère", icon: <Cpu className="w-3.5 h-3.5 text-green-400" /> },
+    { id: "Dispositif de Mémoire", icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" /> },
+    { id: "Affichage", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
+    { id: "Disques", icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" /> },
+    { id: "Réseau", icon: <Wifi className="w-3.5 h-3.5 text-green-400" /> },
+    { id: "Autres périphériques", icon: <Usb className="w-3.5 h-3.5 text-muted-foreground" /> },
+  ];
+
+  const systemInfo: Record<string, { icon: React.ReactNode; label: string; value: string }[]> = {
+    Global: [
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Système d'exploitation", value: "Microsoft Windows 11 Professionnel" },
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-green-400" />, label: "Carte graphique", value: "NVIDIA GeForce RTX 3050 Ti Laptop GPU (4.0 G...)" },
+      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "Mémoire", value: "6.6 GB Gratuit (39.7 GB Total)" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Moniteur", value: "Moniteur Plug-and-Play générique (1920 x 1080 ...)" },
+      { icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" />, label: "Disque de stockage", value: "2491.1 GB Gratuit (5706.6 GB Total)" },
+      { icon: <Volume2 className="w-3.5 h-3.5 text-blue-400" />, label: "Audio", value: "Technologie Intel® Smart Sound pour micropho..." },
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Carte mère", value: "Micro-Star International Co., Ltd. (MS-16R6)" },
+      { icon: <Mouse className="w-3.5 h-3.5 text-purple-400" />, label: "Souris", value: "Souris HID" },
+      { icon: <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="5" width="12" height="7" rx="1" /><rect x="5" y="3" width="6" height="2" rx="0.5" /></svg>, label: "Clavier", value: "Clavier standard PS/2" },
+    ],
+  };
+
+  // Mini panel on right edge
   if (!expanded) {
     return (
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-2.5 py-4 px-1.5 cursor-pointer transition-all duration-300 rounded-l-lg"
-        style={{ background: "hsl(220 16% 10% / 0.95)", border: "1px solid hsl(220 10% 18%)", borderRight: "none" }}
-        onClick={() => setExpanded(true)}>
-        <Monitor className="w-3.5 h-3.5 text-blue-400" />
-        <svg className="w-3.5 h-3.5 text-green-400" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="4" width="12" height="8" rx="1" /></svg>
-        <svg className="w-3.5 h-3.5 text-green-400" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="3" width="14" height="10" rx="1" /></svg>
-        <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="10" height="12" rx="1" /></svg>
-        <PanelRightOpen className="w-3 h-3 text-muted-foreground mt-1" />
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-[200px] rounded-l-lg overflow-hidden transition-all duration-300 animate-fade-in"
+        style={{ background: "hsl(220 16% 13% / 0.97)", border: "1px solid hsl(220 10% 20%)", borderRight: "none" }}>
+        <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
+          <Monitor className="w-3.5 h-3.5 text-blue-400" />
+          <span className="text-[10px] font-bold text-foreground tracking-wide uppercase">Infos sur le PC</span>
+        </div>
+        <div className="px-3 py-2 space-y-2">
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <Monitor className="w-3 h-3 text-blue-400 shrink-0" />
+            <span className="truncate">Microsoft Windows 11 Professi...</span>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <Cpu className="w-3 h-3 text-green-400 shrink-0" />
+            <span className="truncate">11th Gen Intel(R) Core(TM) i7-...</span>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <Monitor className="w-3 h-3 text-green-400 shrink-0" />
+            <span className="truncate">NVIDIA GeForce RTX 3050 Ti La...</span>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <MemoryStick className="w-3 h-3 text-blue-400 shrink-0" />
+            <span>39.7 GB</span>
+          </div>
+        </div>
+        <button onClick={() => setExpanded(true)} className="w-full flex items-center justify-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors py-2 hover:bg-white/5" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
+          <span>•••</span>
+          <span>En apprendre plus</span>
+          <ChevronRight className="w-2.5 h-2.5" />
+        </button>
       </div>
     );
   }
 
+  // Full system info dialog
   return (
-    <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-52 flex flex-col p-3.5 space-y-2 animate-fade-in rounded-l-lg transition-all duration-300"
-      style={{ background: "hsl(220 16% 10% / 0.95)", border: "1px solid hsl(220 10% 18%)", borderRight: "none" }}>
-      <div className="flex items-center justify-between mb-0.5">
-        <div className="flex items-center gap-2">
-          <Monitor className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-[10px] font-bold text-foreground tracking-wide">PC INFO</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in" onClick={() => setExpanded(false)}>
+      <div className="w-[680px] max-h-[480px] rounded-lg overflow-hidden flex flex-col animate-scale-in" onClick={e => e.stopPropagation()}
+        style={{ background: "hsl(220 16% 12%)", border: "1px solid hsl(220 10% 22%)" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2.5 shrink-0" style={{ background: "hsl(220 14% 10%)", borderBottom: "1px solid hsl(220 10% 18%)" }}>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 8H6v-1c0-1 .5-1.5 2-1.5s2 .5 2 1.5v1z"/></svg>
+            </div>
+            <span className="text-xs font-bold text-foreground">Informations sur le système IObit</span>
+          </div>
+          <button onClick={() => setExpanded(false)} className="p-1 rounded hover:bg-white/10 transition-colors">
+            <X className="w-3.5 h-3.5 text-muted-foreground" />
+          </button>
         </div>
-        <button onClick={() => setExpanded(false)} className="p-0.5 rounded hover:bg-white/10 transition-colors">
-          <PanelRightClose className="w-3 h-3 text-muted-foreground" />
-        </button>
+
+        {/* Body */}
+        <div className="flex flex-1 min-h-0">
+          {/* Left categories */}
+          <div className="w-[180px] shrink-0 py-2 overflow-auto custom-scrollbar" style={{ background: "hsl(220 16% 11%)", borderRight: "1px solid hsl(220 10% 18%)" }}>
+            {categories.map(cat => (
+              <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
+                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[11px] transition-all duration-200 ${selectedCategory === cat.id ? "bg-primary/15 text-primary font-bold" : "text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}>
+                {cat.icon}
+                <span className="truncate">{cat.id}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Right details */}
+          <div className="flex-1 p-4 overflow-auto custom-scrollbar">
+            <div className="space-y-1">
+              {(systemInfo[selectedCategory] || systemInfo.Global).map((item, i) => (
+                <div key={i} className="flex items-center gap-3 py-2 text-[11px]" style={{ borderBottom: "1px solid hsl(220 10% 16%)" }}>
+                  {item.icon}
+                  <span className="w-[120px] shrink-0 text-muted-foreground">{item.label}</span>
+                  <span className="text-foreground/80 truncate">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-4 py-3 shrink-0" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
+          <button className="px-6 py-2 rounded text-xs font-bold transition-all duration-200 hover:bg-white/10"
+            style={{ background: "hsl(220 14% 16%)", border: "1px solid hsl(220 10% 25%)", color: "hsl(0 0% 80%)" }}>
+            Exportation...
+          </button>
+          <button onClick={() => setExpanded(false)}
+            className="bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-bold px-6 py-2 rounded transition-all duration-200">
+            Fermer
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <Monitor className="w-3 h-3 text-blue-400 shrink-0" />
-        <span>Microsoft Windows 11 Pro</span>
-      </div>
-      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <svg className="w-3 h-3 text-green-400 shrink-0" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="4" width="12" height="8" rx="1" /></svg>
-        <span>11th Gen Intel(R) Core(TM) i7-...</span>
-      </div>
-      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <svg className="w-3 h-3 text-green-400 shrink-0" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="3" width="14" height="10" rx="1" /></svg>
-        <span>NVIDIA GeForce RTX 3050 Ti La...</span>
-      </div>
-      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-        <svg className="w-3 h-3 text-blue-400 shrink-0" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="10" height="12" rx="1" /></svg>
-        <span>39.7 GB</span>
-      </div>
-      <button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors mt-0.5">
-        <span>•••</span>
-        <span>Learn More</span>
-        <ChevronRight className="w-2.5 h-2.5" />
-      </button>
     </div>
   );
 }
 
-/* PRO Upgrade Modal */
+/* PRO Upgrade Modal — matches screenshot with guarantee badge and status bar */
 function ProUpgradeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
+  const proDrivers = outdatedDrivers.filter(d => d.isPro);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in" onClick={onClose}>
-      <div className="w-[460px] rounded-xl overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}
+      <div className="w-[600px] rounded-lg overflow-hidden flex animate-scale-in" onClick={e => e.stopPropagation()}
         style={{ background: "hsl(220 16% 12%)", border: "1px solid hsl(220 10% 22%)" }}>
-        <div className="p-6 text-center" style={{ background: "linear-gradient(135deg, hsl(30 80% 20%), hsl(0 60% 18%))" }}>
-          <Crown className="w-12 h-12 text-accent mx-auto mb-3" />
-          <h2 className="text-xl font-bold text-foreground">Upgrade to PRO</h2>
-          <p className="text-sm text-muted-foreground mt-1">Unlock all drivers & premium features</p>
+        {/* Left — Guarantee */}
+        <div className="w-[200px] shrink-0 flex flex-col items-center justify-center p-6 text-center" style={{ background: "hsl(220 16% 10%)", borderRight: "1px solid hsl(220 10% 18%)" }}>
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ border: "3px solid hsl(30 60% 40%)", background: "hsl(30 40% 15%)" }}>
+            <div className="text-center">
+              <div className="text-[8px] text-accent font-bold uppercase">Satisfaction</div>
+              <div className="text-lg font-black text-accent">60</div>
+              <div className="text-[7px] text-accent font-bold uppercase">Days</div>
+              <div className="text-[7px] text-accent">Money Back</div>
+            </div>
+          </div>
+          <p className="text-xs font-bold text-foreground mb-3">Guaranteed to keep your drivers up-to-date</p>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">You're fully protected by our 100% money back guarantee within 60 days. No question asked.</p>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="space-y-3">
-            {[
-              { icon: <Zap className="w-4 h-4 text-accent" />, text: "Update ALL outdated drivers including game drivers" },
-              { icon: <Shield className="w-4 h-4 text-green-400" />, text: "Auto backup & restore for safe updates" },
-              { icon: <Star className="w-4 h-4 text-yellow-400" />, text: "Priority download speed — 3x faster" },
-              { icon: <Check className="w-4 h-4 text-blue-400" />, text: "Automatic driver updates in background" },
-            ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 text-sm text-foreground/80">
-                {f.icon}
-                <span>{f.text}</span>
+
+        {/* Right — Content */}
+        <div className="flex-1 p-6 relative">
+          <button onClick={onClose} className="absolute top-3 right-3 p-1 rounded hover:bg-white/10 transition-colors">
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+
+          <h2 className="text-xl font-bold text-foreground mb-4">More Updates Found!</h2>
+          
+          {/* Device status bar */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-xs text-muted-foreground">Your current device status:</span>
+            <div className="flex-1 h-4 rounded overflow-hidden flex">
+              <div className="w-[20%] bg-green-500" />
+              <div className="w-[15%] bg-green-400" />
+              <div className="w-[15%] bg-yellow-400" />
+              <div className="w-[15%] bg-orange-400" />
+              <div className="w-[15%] bg-orange-500" />
+              <div className="w-[20%] bg-red-500" />
+            </div>
+            <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent border-t-foreground -ml-[45%]" />
+          </div>
+
+          <p className="text-sm text-accent font-bold mb-3">
+            {proDrivers.length} device drivers & game drivers can be updated with the PRO edition:
+          </p>
+
+          <div className="space-y-2 mb-3 max-h-[120px] overflow-auto custom-scrollbar">
+            {proDrivers.map((d, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs text-foreground/80">
+                <div className="w-4 h-4 rounded bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
+                  {iconMap[d.icon] || <Monitor className="w-2.5 h-2.5" />}
+                </div>
+                <span>{d.name}</span>
               </div>
             ))}
           </div>
-          <div className="flex gap-3 mt-4">
-            <div className="flex-1 rounded-lg p-4 text-center cursor-pointer transition-all duration-200 hover:scale-[1.02]"
-              style={{ background: "hsl(220 14% 16%)", border: "1px solid hsl(220 10% 25%)" }}>
-              <div className="text-xs text-muted-foreground">1 Year</div>
-              <div className="text-xl font-bold text-accent mt-1">$16.77</div>
-              <div className="text-[10px] text-muted-foreground line-through">$59.95</div>
-            </div>
-            <div className="flex-1 rounded-lg p-4 text-center cursor-pointer transition-all duration-200 hover:scale-[1.02] relative overflow-hidden"
-              style={{ background: "hsl(220 14% 16%)", border: "2px solid hsl(var(--accent))" }}>
-              <div className="absolute top-0 right-0 bg-accent text-[8px] text-white font-bold px-2 py-0.5 rounded-bl">BEST</div>
-              <div className="text-xs text-muted-foreground">3 PCs / 1 Year</div>
-              <div className="text-xl font-bold text-accent mt-1">$22.77</div>
-              <div className="text-[10px] text-muted-foreground line-through">$89.95</div>
-            </div>
-          </div>
-          <button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-bold py-3 rounded-lg transition-all duration-200 shadow-lg shadow-accent/30 hover:shadow-accent/50 mt-2">
-            Upgrade Now — Save 72%
-          </button>
-          <button onClick={onClose} className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-2">
-            Maybe later
+
+          <button className="text-xs text-blue-400 hover:underline mb-4">More...</button>
+
+          <p className="text-xs text-muted-foreground mb-4">Upgrade to PRO now at the best price.</p>
+
+          <button className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold px-8 py-3 rounded transition-all duration-200 shadow-lg shadow-primary/30 float-right">
+            Upgrade Now
           </button>
         </div>
       </div>
@@ -208,48 +314,92 @@ function ActivateModal({ open, onClose }: { open: boolean; onClose: () => void }
   );
 }
 
-/* Driver Detail Panel */
+/* Driver Detail Panel — matches screenshot with WHQL badge, table, action buttons */
 function DriverDetailPanel({ driver, onClose }: { driver: Driver; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in" onClick={onClose}>
-      <div className="w-[440px] rounded-xl overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}
+      <div className="w-[520px] rounded-lg overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}
         style={{ background: "hsl(220 16% 12%)", border: "1px solid hsl(220 10% 22%)" }}>
-        <div className="flex items-center justify-between px-5 py-3" style={{ background: "hsl(220 14% 14%)", borderBottom: "1px solid hsl(220 10% 20%)" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center text-muted-foreground">
-              {iconMap[driver.icon] || <Monitor className="w-4 h-4" />}
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "hsl(220 14% 10%)", borderBottom: "1px solid hsl(220 10% 18%)" }}>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7"/></svg>
             </div>
-            <h3 className="text-sm font-bold text-foreground">{driver.name}</h3>
+            <span className="text-xs font-bold text-foreground">Driver Details</span>
           </div>
           <button onClick={onClose} className="p-1 rounded hover:bg-white/10 transition-colors">
-            <X className="w-4 h-4 text-muted-foreground" />
+            <X className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
         </div>
-        <div className="p-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: "Category", value: driver.category },
-              { label: "Current Version", value: driver.currentVersion },
-              { label: "Current Date", value: driver.currentDate },
-              { label: "New Version", value: driver.newVersion },
-              { label: "New Date", value: driver.newDate },
-              { label: "Type", value: driver.isPro ? "PRO" : "Free" },
-            ].map((item, i) => (
-              <div key={i} className="rounded-lg px-3 py-2.5" style={{ background: "hsl(220 14% 16%)" }}>
-                <div className="text-[10px] text-muted-foreground">{item.label}</div>
-                <div className="text-xs text-foreground mt-0.5 font-medium">{item.value}</div>
-              </div>
-            ))}
+
+        {/* Content */}
+        <div className="p-5">
+          <div className="text-[11px] text-muted-foreground mb-1">{driver.category}</div>
+          <h3 className="text-base font-bold text-foreground mb-2">{driver.name}</h3>
+          
+          {/* WHQL badge */}
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+              <Check className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-[11px] text-green-400">This driver has passed WHQL Test and strict IObit Review Rules.</span>
           </div>
-          {driver.isPro ? (
-            <button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-bold py-2.5 rounded-lg transition-all duration-200">
-              Upgrade to Update
-            </button>
-          ) : (
-            <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 rounded-lg transition-all duration-200">
-              Update Driver
-            </button>
-          )}
+
+          <div className="flex gap-5">
+            {/* Details table */}
+            <div className="flex-1">
+              <table className="w-full text-[11px]" style={{ borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid hsl(220 10% 20%)" }}>
+                    <th className="text-left py-2 px-3 text-muted-foreground font-bold">Details</th>
+                    <th className="text-left py-2 px-3 text-muted-foreground font-bold">Current</th>
+                    <th className="text-left py-2 px-3 text-muted-foreground font-bold">Available</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
+                    <td className="py-2 px-3 text-muted-foreground">Version:</td>
+                    <td className="py-2 px-3 text-foreground/80">{driver.currentVersion}</td>
+                    <td className="py-2 px-3 text-foreground/80">{driver.newVersion} (1.52 MB)</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
+                    <td className="py-2 px-3 text-muted-foreground">Date:</td>
+                    <td className="py-2 px-3 text-foreground/80">{driver.currentDate}</td>
+                    <td className="py-2 px-3 text-foreground/80">{driver.newDate}</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
+                    <td className="py-2 px-3 text-muted-foreground">Publisher:</td>
+                    <td className="py-2 px-3 text-foreground/80">Intel Corporation</td>
+                    <td className="py-2 px-3 text-foreground/80">INTEL</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Action buttons */}
+            <div className="w-[110px] shrink-0 flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-blue-500/15 flex items-center justify-center mb-1">
+                <Info className="w-5 h-5 text-blue-400" />
+              </div>
+              <button className={`w-full text-xs font-bold py-2 rounded transition-all duration-200 ${driver.isPro ? "bg-accent hover:bg-accent/90 text-accent-foreground" : "bg-primary hover:bg-primary/90 text-primary-foreground"}`}>
+                Update
+              </button>
+              <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors hover:underline">Roll Back</button>
+              <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors hover:underline">Uninstall</button>
+              <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors hover:underline">Ignore</button>
+            </div>
+          </div>
+
+          {/* Devices using this driver */}
+          <div className="mt-4 rounded-lg overflow-hidden" style={{ border: "1px solid hsl(220 10% 20%)" }}>
+            <div className="px-3 py-2 text-[11px] font-bold text-muted-foreground" style={{ background: "hsl(220 14% 14%)" }}>
+              Devices using this driver (1)
+            </div>
+            <div className="px-3 py-2 text-[11px] text-foreground/80" style={{ background: "hsl(220 16% 11%)" }}>
+              {driver.name}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -329,14 +479,12 @@ export function ScanPage() {
         const newVal = current + Math.random() * 8 + 4;
         if (newVal >= 100) {
           next.set(currentUpdatingId, 100);
-          // Mark as done, move to next
           setTimeout(() => {
             setUpdatedDrivers(prev2 => {
               const n = new Set(prev2);
               n.add(currentUpdatingId);
               return n;
             });
-            // Find next free driver to update
             const freeSelected = outdatedDrivers.filter(d => !d.isPro && selectedDrivers.has(d.id));
             const currentIdx = freeSelected.findIndex(d => d.id === currentUpdatingId);
             const nextDriver = freeSelected[currentIdx + 1];
@@ -368,7 +516,6 @@ export function ScanPage() {
     if (driver.isPro) {
       setShowProModal(true);
     } else {
-      // Single driver update simulation
       setScanState("updating");
       setCurrentUpdatingId(driver.id);
     }
@@ -420,7 +567,7 @@ export function ScanPage() {
     );
   }
 
-  /* SCANNING — keep red glow + progress ring */
+  /* SCANNING — keep red glow + progress ring + lit tick marks */
   if (scanState === "scanning") {
     return (
       <div className="flex-1 flex relative">
@@ -430,37 +577,7 @@ export function ScanPage() {
             <p className="text-sm text-muted-foreground mt-1 transition-all duration-200">{currentDriver}</p>
           </div>
 
-          <div className="relative w-52 h-52 cursor-pointer group" onClick={stopScan}>
-            <div className="absolute inset-0 rounded-full metallic-ring shadow-xl" />
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 150 150">
-              <TickMarks radius={72} count={60} />
-            </svg>
-            <div className="absolute inset-[8px] rounded-full" style={{ background: "hsl(220 15% 10%)" }} />
-
-            {/* Keep the red glow ring during scan */}
-            <div className="absolute inset-[12px] rounded-full transition-all duration-500" style={{
-              background: "radial-gradient(circle at 50% 40%, hsl(0 80% 35%), hsl(0 70% 20%) 60%, hsl(0 60% 12%) 100%)",
-              boxShadow: "0 0 30px 8px hsl(0 72% 51% / 0.5), 0 0 60px 15px hsl(0 72% 51% / 0.3), inset 0 -10px 30px hsl(0 50% 10% / 0.8), inset 0 5px 15px hsl(0 80% 50% / 0.3)",
-            }} />
-
-            {/* Progress ring on top */}
-            <svg className="absolute inset-[8px] w-[calc(100%-16px)] h-[calc(100%-16px)] -rotate-90" viewBox="0 0 150 150">
-              <circle cx="75" cy="75" r="68" fill="none" stroke="hsl(0 50% 15% / 0.5)" strokeWidth="4" />
-              <circle cx="75" cy="75" r="68" fill="none" stroke="hsl(0 72% 51%)"
-                strokeWidth="4" strokeDasharray={427} strokeDashoffset={427 - (progress / 100) * 427}
-                strokeLinecap="round" className="transition-all duration-200"
-                style={{ filter: "drop-shadow(0 0 6px hsl(0 72% 51% / 0.8))" }}
-              />
-            </svg>
-
-            <div className="absolute inset-[28px] rounded-full flex flex-col items-center justify-center" style={{
-              background: "radial-gradient(circle at 50% 35%, hsl(0 60% 25%), hsl(0 50% 15%) 50%, hsl(220 20% 8%) 100%)",
-              boxShadow: "inset 0 2px 10px hsl(0 80% 40% / 0.4), inset 0 -5px 15px hsl(0 0% 0% / 0.6)"
-            }}>
-              <span className="text-xl font-bold text-white/90 tracking-widest">STOP</span>
-            </div>
-            <div className="absolute inset-[10px] rounded-full scan-glow-pulse pointer-events-none" />
-          </div>
+          <ScanButton label="STOP" onClick={stopScan} glowing={true} progress={progress} />
 
           <span className="text-2xl font-bold text-foreground">{Math.round(progress)}%</span>
 
@@ -477,7 +594,7 @@ export function ScanPage() {
   return (
     <div className="flex-1 flex min-h-0 animate-fade-in relative">
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Alert */}
+        {/* Alert bar */}
         <div className="flex items-center justify-between px-5 py-3.5" style={{ background: "hsl(220 14% 13%)" }}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
@@ -491,9 +608,10 @@ export function ScanPage() {
               Scan again
             </button>
           </div>
-          <div className="flex items-stretch rounded overflow-hidden">
+          {/* Update Now — same height button + dropdown */}
+          <div className="flex items-stretch rounded overflow-hidden h-8">
             <button onClick={startUpdateAll}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 py-2 transition-colors shadow-lg shadow-primary/30">
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold px-5 transition-colors shadow-lg shadow-primary/30">
               Update Now
             </button>
             <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-2 border-l border-white/20 transition-colors flex items-center">
@@ -502,19 +620,19 @@ export function ScanPage() {
           </div>
         </div>
 
-        {/* PRO upsell — with X close */}
+        {/* PRO upsell banner */}
         {showProBanner && (
           <div className="mx-5 mt-3 rounded-lg px-4 py-2.5 flex items-center justify-between animate-fade-in" style={{ background: "linear-gradient(90deg, hsl(30 60% 15%), hsl(0 40% 15%))", border: "1px solid hsl(30 40% 25%)" }}>
             <div className="flex items-center gap-3">
               <div className="w-6 h-6 rounded bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shrink-0">
-                <span className="text-white text-[10px] font-bold">⬆</span>
+                <span className="text-white text-[10px] font-bold">🛒</span>
               </div>
               <span className="text-[11px] text-foreground/80">
-                Upgrade to <strong className="text-accent">PRO</strong> to update <span className="text-primary font-bold">{outdatedDrivers.filter(d => d.isPro).length}</span> more drivers.
+                Upgrade to <strong className="text-accent">PRO edition</strong> to update <span className="text-primary font-bold">{outdatedDrivers.filter(d => d.isPro).length} more</span> device drivers & game drivers.
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => setShowProModal(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground text-[11px] font-bold px-4 py-1.5 rounded transition-colors">Upgrade</button>
+              <button onClick={() => setShowProModal(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground text-[11px] font-bold px-5 py-1.5 rounded transition-colors">Upgrade</button>
               <button onClick={() => setShowProBanner(false)} className="p-0.5 rounded hover:bg-white/10 transition-colors">
                 <X className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
@@ -560,7 +678,7 @@ export function ScanPage() {
                     animation: "fade-in 0.3s ease-out both",
                   }}
                   onClick={() => !isUpdating && setSelectedDetail(driver)}>
-                  <Checkbox checked={selectedDrivers.has(driver.id)} onCheckedChange={(e) => { e && toggleDriver(driver.id); }}
+                  <Checkbox checked={selectedDrivers.has(driver.id)} onCheckedChange={() => toggleDriver(driver.id)}
                     onClick={e => e.stopPropagation()}
                     className="border-muted-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
                   <div className="w-7 h-7 rounded bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
@@ -586,18 +704,20 @@ export function ScanPage() {
                     <div className="text-[10px] text-muted-foreground">Available: {driver.newDate}</div>
                   </div>
                   {!isUpdated && !isUpdating && (
-                    <div className="flex items-stretch shrink-0 rounded overflow-hidden" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-stretch shrink-0 rounded overflow-hidden h-7" onClick={e => e.stopPropagation()}>
                       <button onClick={() => handleDriverUpdate(driver)}
-                        className={`text-[11px] font-bold px-3.5 py-1.5 transition-colors ${driver.isPro ? "bg-accent hover:bg-accent/90 text-accent-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground"}`}>
+                        className="bg-accent hover:bg-accent/90 text-accent-foreground text-[11px] font-bold px-3.5 transition-colors">
                         Update
                       </button>
-                      <button className={`px-1.5 border-l border-white/20 transition-colors flex items-center ${driver.isPro ? "bg-accent hover:bg-accent/90 text-accent-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground"}`}>
+                      <button className="bg-accent hover:bg-accent/90 text-accent-foreground px-1.5 border-l border-white/20 transition-colors flex items-center">
                         <ChevronDown className="w-2.5 h-2.5" />
                       </button>
                     </div>
                   )}
                   {isUpdated && (
-                    <span className="text-[11px] text-green-400 font-bold shrink-0">Updated ✓</span>
+                    <span className="text-[11px] text-green-400 font-bold shrink-0 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Up-to-date
+                    </span>
                   )}
                   {isUpdating && (
                     <span className="text-[11px] text-primary font-bold shrink-0 animate-pulse">{Math.round(updateProgress)}%</span>
@@ -616,11 +736,21 @@ export function ScanPage() {
             <span>UpToDate ({upToDateDrivers.length})</span>
           </button>
           {showUpToDate && (
-            <div className="mt-2 space-y-0.5 pl-6 animate-fade-in">
+            <div className="mt-2 space-y-0.5 animate-fade-in">
               {upToDateDrivers.map((name, i) => (
-                <div key={i} className="flex items-center gap-2 text-[11px] text-muted-foreground py-1" style={{ animationDelay: `${i * 30}ms`, animation: "fade-in 0.2s ease-out both" }}>
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500/60" />
-                  <span>{name}</span>
+                <div key={i} className="flex items-center gap-3 px-3 py-2 rounded text-[11px] text-muted-foreground" 
+                  style={{ background: "hsl(220 14% 13%)", animationDelay: `${i * 30}ms`, animation: "fade-in 0.2s ease-out both" }}>
+                  <div className="w-7 h-7 rounded bg-secondary flex items-center justify-center shrink-0">
+                    <Monitor className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-foreground/70">{name}</div>
+                    <div className="text-[10px] text-muted-foreground">Périphériques système</div>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">Current: 11/15/2024</span>
+                  <span className="text-[11px] text-green-400 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Up-to-date
+                  </span>
                 </div>
               ))}
             </div>
