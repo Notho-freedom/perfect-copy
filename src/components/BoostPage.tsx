@@ -89,10 +89,10 @@ export function BoostPage() {
             animation: "fade-in 0.3s ease-out both",
           }}>
             {/* Gauge */}
-            <div className="relative w-32 h-32 flex items-center justify-center">
+            <div className="relative w-28 h-28 flex items-center justify-center">
               {card.gauge}
               {!card.status && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
                   <span className="text-white text-[9px] font-bold">i</span>
                 </div>
               )}
@@ -108,13 +108,15 @@ export function BoostPage() {
             {/* Title */}
             <h3 className="text-base font-bold text-foreground mt-2">{card.title}</h3>
 
-            {/* Spacer to push button to same line */}
-            <div className="flex-1" />
+            {/* Description — fixed height to align buttons */}
+            <p className="text-[11px] text-muted-foreground leading-relaxed mt-2 min-h-[44px]">
+              {card.desc}
+            </p>
 
-            {/* Button — uniform across all cards */}
-            <div className="flex items-stretch w-full max-w-[180px] rounded overflow-hidden mt-4">
+            {/* Button — uniform height, same line across cards */}
+            <div className="flex items-stretch w-full max-w-[180px] rounded overflow-hidden mt-auto h-9">
               <button onClick={card.onAction}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold py-2.5 transition-all duration-200">
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-all duration-200">
                 {card.buttonLabel}
               </button>
               {card.hasDropdown && (
@@ -129,10 +131,6 @@ export function BoostPage() {
                 {card.subLink}
               </button>
             )}
-
-            <p className="text-[11px] text-muted-foreground leading-relaxed mt-3">
-              {card.desc}
-            </p>
           </div>
         ))}
       </div>
