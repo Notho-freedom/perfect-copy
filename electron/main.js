@@ -41,10 +41,13 @@ app.whenReady().then(() => {
 
   // IPC handler for system info
   ipcMain.handle("get-system-info", async () => {
+    console.log("[Electron] get-system-info IPC called");
     try {
-      return getSystemInfo();
+      const info = getSystemInfo();
+      console.log("[Electron] System info collected:", info?.cpu?.name || "unknown CPU");
+      return info;
     } catch (e) {
-      console.error("Failed to get system info:", e);
+      console.error("[Electron] Failed to get system info:", e.message, e.stack);
       return null;
     }
   });

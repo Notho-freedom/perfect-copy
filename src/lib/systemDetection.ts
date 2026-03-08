@@ -231,36 +231,63 @@ function detectBrowser(): SystemInfo["browser"] {
 
 /** Check if running inside Electron */
 export function isRunningInElectron(): boolean {
-  // 1. Check preload bridge flag
-  if (window.electronAPI?.isElectron) return true;
-  // 2. Check userAgent
-  if (navigator.userAgent.toLowerCase().includes("electron")) return true;
-  // 3. Check for node process
-  if (typeof process !== "undefined" && process.versions && (process.versions as any).electron) return true;
+  // 1. Most reliable: check preload bridge flag
+  if (window.electronAPI?.isElectron === true) return true;
+  // 2. Check userAgent (Electron always includes "Electron/" in UA)
+  if (/electron\//i.test(navigator.userAgent)) return true;
   return false;
+}
+
+/** Wait for electronAPI to be available (preload may load after DOM) */
+async function waitForElectronAPI(maxWaitMs = 2000): Promise<boolean> {
+  if (window.electronAPI?.getSystemInfo) return true;
+  
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (window.electronAPI?.getSystemInfo) {
+        clearInterval(interval);
+        resolve(true);
+      } else if (Date.now() - start > maxWaitMs) {
+        clearInterval(interval);
+        resolve(false);
+      }
+    }, 50);
+  });
 }
 
 /** Detect system info — uses Electron native APIs if available, otherwise browser fallback */
 export async function detectSystemInfoAsync(): Promise<SystemInfo> {
   const inElectron = isRunningInElectron();
-  console.log("[SystemDetection] Environment:", inElectron ? "Electron" : "Browser", "| electronAPI:", !!window.electronAPI, "| getSystemInfo:", !!window.electronAPI?.getSystemInfo);
+  console.log("[SystemDetection] Environment:", inElectron ? "Electron" : "Browser", 
+    "| electronAPI exists:", !!window.electronAPI, 
+    "| isElectron flag:", window.electronAPI?.isElectron,
+    "| getSystemInfo exists:", !!window.electronAPI?.getSystemInfo,
+    "| userAgent:", navigator.userAgent.substring(0, 100));
   
-  if (inElectron && window.electronAPI?.getSystemInfo) {
-    try {
-      const electronInfo = await window.electronAPI.getSystemInfo();
-      console.log("[SystemDetection] Electron data received:", !!electronInfo);
-      if (electronInfo) {
-        return fromElectron(electronInfo);
+  if (inElectron) {
+    // Wait for preload bridge if not yet available
+    const apiReady = await waitForElectronAPI();
+    console.log("[SystemDetection] API ready after wait:", apiReady);
+    
+    if (apiReady && window.electronAPI?.getSystemInfo) {
+      try {
+        const electronInfo = await window.electronAPI.getSystemInfo();
+        console.log("[SystemDetection] Electron data received:", !!electronInfo, electronInfo ? `CPU: ${electronInfo.cpu?.name}` : "null");
+        if (electronInfo) {
+          return fromElectron(electronInfo);
+        }
+      } catch (e) {
+        console.error("[SystemDetection] Electron getSystemInfo() threw:", e);
       }
-    } catch (e) {
-      console.warn("Electron system detection failed, falling back to browser:", e);
     }
   }
   
-  // If we're in Electron but getSystemInfo failed, still mark source appropriately
   const browserInfo = detectSystemInfoBrowser();
+  // Don't mark as electron-limited unless we're truly in Electron
   if (inElectron) {
     browserInfo.source = "electron-limited";
+    console.warn("[SystemDetection] Running in Electron but native detection failed — using browser fallback");
   }
   return browserInfo;
 }
