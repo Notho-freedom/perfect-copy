@@ -1,56 +1,52 @@
 
 
-# Driver Booster 13.1 — Exact Web Replica
+# Amélioration de la vérification de compatibilité pilotes-matériel
 
-A fully interactive web clone of IObit Driver Booster 13.1, replicating the dark UI, all sections, and simulated interactions.
+## Problèmes identifiés
 
-## Design & Theme
-- Dark theme matching Driver Booster's dark gray/black color scheme with red accent colors
-- Left sidebar navigation with icon + label items (Scan/Update, Boost, Tools, Action Center)
-- Top header bar with app title "Driver Booster 13.1", FREE badge, and window control icons
-- Hamburger menu opening a slide-out panel (Settings, Driver Update History, Check for Updates, User Manual, Technical Support, Skin selector, etc.)
+En analysant le code actuel, plusieurs faiblesses dans la vérification de compatibilité :
 
-## 1. Scan Page (Home)
-- Large circular **SCAN** button with red glow ring animation
-- Info banner: "Scan to check the status of drivers!"
-- On click: animated scanning state with circular progress bar, percentage counter, "Scanning..." text with current driver name cycling, and a **STOP** button
-- After scan completes: transitions to results view
+1. **Le champ `os_compatibility` n'est jamais utilisé** — la table `driver_catalog` contient un champ `os_compatibility` (tableau de strings), mais l'edge function `get-driver-info` ne filtre jamais dessus. Un pilote macOS pourrait apparaître sur Windows.
 
-## 2. Scan Results / Update Page
-- Alert banner: "X device drivers outdated" with "Scan again" link
-- "Update Now" red button at top
-- PRO upgrade upsell banner
-- List of outdated drivers with: checkbox, icon, driver name, category badge (PRO), current version date, available version date, individual "Update" button
-- "UpToDate (N)" collapsed section at the bottom
-- Large circular **UPDATE** button in the center
-- PC Info widget on the right side (OS, CPU, GPU, RAM, "Learn More")
+2. **Matching de mots-clés trop lâche** — le matching partiel (`dk.includes(kw) || kw.includes(dk)`) génère des faux positifs. Par exemple "intel" match tout pilote Intel même si c'est un pilote réseau et que le mot-clé vient du GPU.
 
-## 3. Boost Page
-- Three cards side by side: **Game Boost**, **Internet Boost**, **System Optimize**
-- Each with a gauge/icon graphic, status indicator, action button (Super Boost / Boost Now / Check Now), and description text
-- Game Boost has a "Configure" link and ON/OFF gauge
+3. **Mots-clés génériques toujours ajoutés** — `getHardwareKeywords()` ajoute systématiquement `"realtek", "usb", "bluetooth", "network", "audio", "hid"` quel que soit le matériel réel, donc des pilotes non pertinents apparaissent.
 
-## 4. Tools Page
-- **Hot Fix Tools** section: cards for Backup & Restore, Fix No Sound, Fix Device Error (with issue count)
-- Right sidebar actions: Clean Invalid Device Data (with count), Fix Network Failure, Fix Bad Resolution
-- **Other Useful Tools** section: grid of tool cards — Fix Incompatible Drivers, Offline Driver Updater, System Information, Free & Fast VPN, Screen Recorder (with NEW badges)
+4. **Pas de filtrage par catégorie matérielle** — si le GPU est NVIDIA, les pilotes AMD Radeon ne devraient pas apparaître, mais rien ne l'empêche actuellement.
 
-## 5. Action Center Page
-- Info banner: "Make PC safer and faster with the following programs recommended by IObit"
-- Hide link at top right
-- List of recommended apps (iTop VPN, iTop Screen Recorder, iTop Easy Desktop, Advanced SystemCare) each with: HOT badge, icon, name, description, orange "Install now" button
+## Plan de correction
 
-## 6. Hamburger Menu (Slide-out)
-- Menu items: Settings, Driver Update History, Check for Updates, User Manual, Technical Support, Help Us Translate, What's New, About
-- **Skin** section at the bottom with theme preview thumbnail and color swatches
+### 1. Edge function `get-driver-info` — filtrage OS strict
 
-## 7. Bottom Promo Banner
-- Persistent promotional banner at the bottom with discount messaging and "Check It Out" / "Enter Code" actions
+Ajouter un filtre SQL sur `os_compatibility` pour ne retourner que les pilotes compatibles avec l'OS détecté :
 
-## Interactions & Animations
-- Scan button: red glow pulse animation, click triggers scanning state
-- Scanning: circular progress animation with percentage, driver name cycling
-- Navigation between all sections via sidebar with active state highlighting
-- All buttons have hover effects
-- Simulated fake driver data (hardcoded list of realistic driver names, versions, dates)
+```sql
+.contains('os_compatibility', [os])
+```
+
+### 2. Edge function — scoring amélioré avec catégories
+
+Remplacer le matching naïf par un scoring qui :
+- Exclut les pilotes GPU d'un vendor concurrent (si GPU = NVIDIA, exclure les pilotes AMD display)
+- Pondère les matches exacts plus fort que les matches partiels
+- Utilise les catégories hardware pour filtrer (ex: ne pas montrer des pilotes "Storage controllers" si aucun SSD de ce vendor n'est détecté)
+
+### 3. `getHardwareKeywords()` — keywords contextuels
+
+Modifier `src/lib/systemDetection.ts` pour :
+- Ne plus ajouter de mots-clés génériques systématiquement
+- Extraire des keywords plus précis du renderer GPU (ex: "RTX 3060", "GeForce")
+- Ajouter un champ `category_hints` qui associe chaque keyword à une catégorie matérielle
+
+### 4. Côté client — indicateur de confiance
+
+Afficher dans le détail du pilote si la compatibilité est confirmée (match GPU/vendor exact) ou estimée (match générique).
+
+## Fichiers modifiés
+
+| Fichier | Changement |
+|---|---|
+| `supabase/functions/get-driver-info/index.ts` | Filtrage OS, scoring amélioré, exclusion vendors concurrents |
+| `src/lib/systemDetection.ts` | Keywords contextuels, suppression génériques, ajout category hints |
+| `src/components/ScanPage.tsx` | Passer l'OS normalisé, afficher indicateur de confiance match |
 
