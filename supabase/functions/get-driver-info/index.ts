@@ -143,13 +143,12 @@ Deno.serve(async (req) => {
       .filter(d => d.score > 0)
       .sort((a, b) => b.score - a.score);
 
-    // If too few matched, add some generic compatible ones (but NOT excluded vendors)
-    if (relevantDrivers.length < 8 && keywords.length > 0) {
-      const genericDrivers = scoredDrivers
+    // When vendor pre-filtering is active, include all vendor-matched drivers even with score 0
+    if (detected_vendors && detected_vendors.length > 0 && relevantDrivers.length < 8) {
+      const vendorMatched = scoredDrivers
         .filter(d => d.score === 0 && !relevantDrivers.find(r => r.id === d.id))
-        .slice(0, 8 - relevantDrivers.length)
         .map(d => ({ ...d, matchType: 'generic' as const }));
-      relevantDrivers = [...relevantDrivers, ...genericDrivers];
+      relevantDrivers = [...relevantDrivers, ...vendorMatched];
     }
 
     // If no keywords provided, use all OS-compatible drivers
