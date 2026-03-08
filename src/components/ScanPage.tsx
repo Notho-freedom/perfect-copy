@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { outdatedDrivers as fallbackOutdated, upToDateDrivers as fallbackUpToDate, scanDriverNames, Driver } from "@/data/drivers";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp, Monitor, Volume2, Wifi, HardDrive, Mouse, Network, Usb, Info, Search, ChevronRight, X, Check, Crown, Shield, Zap, Star, ArrowLeft, RotateCcw, Trash2, EyeOff, Cpu, MemoryStick } from "lucide-react";
-import { detectSystemInfo, getHardwareKeywords, type SystemInfo } from "@/lib/systemDetection";
+import { detectSystemInfo, getHardwareKeywords, getGPUVendorHint, type SystemInfo } from "@/lib/systemDetection";
 import { supabase } from "@/integrations/supabase/client";
 
 type ScanState = "idle" | "scanning" | "results-list" | "updating" | "update-complete";
@@ -505,12 +505,13 @@ export function ScanPage() {
     setUpdatedDrivers(new Set());
     setCurrentUpdatingId(null);
 
-    // Fetch real driver data from Supabase
+    // Fetch real driver data from Supabase with contextual keywords
     const sysInfo = detectSystemInfo();
     const keywords = getHardwareKeywords(sysInfo);
+    const gpuVendor = getGPUVendorHint(sysInfo);
     
     supabase.functions.invoke('get-driver-info', {
-      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase() },
+      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase(), gpu_vendor: gpuVendor },
     }).then(({ data, error }) => {
       if (!error && data?.outdated) {
         const drivers: Driver[] = data.outdated.map((d: any) => ({
@@ -523,6 +524,7 @@ export function ScanPage() {
           newDate: d.newDate,
           isPro: d.isPro,
           icon: d.icon,
+          matchConfidence: d.matchConfidence || 'generic',
         }));
         setOutdatedDrivers(drivers);
         setSelectedDrivers(new Set(drivers.map(d => d.id)));
@@ -801,6 +803,14 @@ export function ScanPage() {
                       <span className="text-[13px] text-foreground truncate group-hover/row:text-primary transition-colors">{driver.name}</span>
                       {driver.isPro && (
                         <span className="text-[7px] bg-accent/20 text-accent px-1.5 py-0.5 rounded font-bold">PRO</span>
+                      )}
+                      {driver.matchConfidence === 'exact' && (
+                        <span className="text-[7px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5">
+                          <Shield className="w-2.5 h-2.5" /> Vérifié
+                        </span>
+                      )}
+                      {driver.matchConfidence === 'partial' && (
+                        <span className="text-[7px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">Compatible</span>
                       )}
                       {isUpdated && <Check className="w-3.5 h-3.5 text-green-400" />}
                     </div>

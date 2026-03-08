@@ -32,6 +32,11 @@ export interface SystemInfo {
   };
 }
 
+export interface HardwareKeyword {
+  keyword: string;
+  category: string;
+}
+
 function detectOS(): SystemInfo["os"] {
   const ua = navigator.userAgent;
   let name = "Unknown OS";
@@ -44,7 +49,6 @@ function detectOS(): SystemInfo["os"] {
     if (match) {
       const ntVersion = parseFloat(match[1]);
       if (ntVersion >= 10.0) {
-        // Check for Windows 11 via platform or client hints
         version = ua.includes("Windows NT 10.0") ? "10/11" : `NT ${match[1]}`;
       } else if (ntVersion >= 6.3) version = "8.1";
       else if (ntVersion >= 6.2) version = "8";
@@ -76,11 +80,9 @@ function detectOS(): SystemInfo["os"] {
 
 function detectCPU(): SystemInfo["cpu"] {
   const cores = navigator.hardwareConcurrency || 0;
-  
-  // Try to infer CPU from user agent
   const ua = navigator.userAgent;
   let name = `${cores}-Core Processor`;
-  
+
   if (ua.includes("Win")) {
     if (cores >= 16) name = `Intel Core i9 / AMD Ryzen 9 (${cores} cores)`;
     else if (cores >= 12) name = `Intel Core i7 / AMD Ryzen 7 (${cores} cores)`;
@@ -116,7 +118,6 @@ function detectGPU(): SystemInfo["gpu"] {
 }
 
 function detectRAM(): SystemInfo["ram"] {
-  // navigator.deviceMemory is available in some browsers (Chrome)
   const nav = navigator as any;
   const totalGB = nav.deviceMemory || null;
   return { totalGB };
@@ -167,22 +168,54 @@ export function detectSystemInfo(): SystemInfo {
   };
 }
 
-/** Returns keywords for matching drivers in the catalog based on detected hardware */
-export function getHardwareKeywords(info: SystemInfo): string[] {
-  const keywords: string[] = [];
-  
+/** Extract the GPU vendor string for exclusion filtering */
+export function getGPUVendorHint(info: SystemInfo): string {
+  const renderer = info.gpu.renderer.toLowerCase();
+  const vendor = info.gpu.vendor.toLowerCase();
+  if (renderer.includes("nvidia") || renderer.includes("geforce") || vendor.includes("nvidia")) return "nvidia";
+  if (renderer.includes("radeon") || renderer.includes("amd") || vendor.includes("amd")) return "amd";
+  if (renderer.includes("intel") || vendor.includes("intel")) return "intel";
+  return "unknown";
+}
+
+/** Returns contextual keywords with category hints for matching drivers in the catalog */
+export function getHardwareKeywords(info: SystemInfo): HardwareKeyword[] {
+  const keywords: HardwareKeyword[] = [];
+
+  // GPU-specific keywords with display/graphics category
   const gpu = info.gpu.renderer.toLowerCase();
-  if (gpu.includes("nvidia") || gpu.includes("geforce")) keywords.push("nvidia", "geforce");
-  if (gpu.includes("amd") || gpu.includes("radeon")) keywords.push("amd", "radeon");
-  if (gpu.includes("intel")) keywords.push("intel");
-  
+  const gpuVendor = info.gpu.vendor.toLowerCase();
+
+  if (gpu.includes("nvidia") || gpu.includes("geforce") || gpuVendor.includes("nvidia")) {
+    keywords.push({ keyword: "nvidia", category: "display" });
+    keywords.push({ keyword: "geforce", category: "display" });
+    // Extract specific GPU model if possible (e.g. "RTX 3060", "GTX 1080")
+    const rtxMatch = gpu.match(/(rtx\s*\d{4}\s*\w*|gtx\s*\d{4}\s*\w*)/i);
+    if (rtxMatch) keywords.push({ keyword: rtxMatch[1].trim().toLowerCase(), category: "display" });
+  }
+  if (gpu.includes("amd") || gpu.includes("radeon") || gpuVendor.includes("amd")) {
+    keywords.push({ keyword: "amd", category: "display" });
+    keywords.push({ keyword: "radeon", category: "display" });
+    const rxMatch = gpu.match(/(rx\s*\d{4}\s*\w*|vega\s*\d*)/i);
+    if (rxMatch) keywords.push({ keyword: rxMatch[1].trim().toLowerCase(), category: "display" });
+  }
+  if (gpu.includes("intel") || gpuVendor.includes("intel")) {
+    keywords.push({ keyword: "intel", category: "display" });
+    const irisMatch = gpu.match(/(iris\s*\w*|uhd\s*\d*|hd\s*graphics\s*\d*)/i);
+    if (irisMatch) keywords.push({ keyword: irisMatch[1].trim().toLowerCase(), category: "display" });
+  }
+
+  // OS keywords
   const os = info.os.name.toLowerCase();
-  if (os.includes("windows")) keywords.push("windows");
-  if (os.includes("mac")) keywords.push("macos");
-  if (os.includes("linux")) keywords.push("linux");
-  
-  // Always include generic keywords
-  keywords.push("realtek", "usb", "bluetooth", "network", "audio", "hid");
-  
+  if (os.includes("windows")) keywords.push({ keyword: "windows", category: "system" });
+  if (os.includes("mac")) keywords.push({ keyword: "macos", category: "system" });
+  if (os.includes("linux")) keywords.push({ keyword: "linux", category: "system" });
+
+  // CPU vendor keywords with processor category
+  const cpu = info.cpu.name.toLowerCase();
+  if (cpu.includes("intel")) keywords.push({ keyword: "intel", category: "chipset" });
+  if (cpu.includes("amd") || cpu.includes("ryzen")) keywords.push({ keyword: "amd", category: "chipset" });
+  if (cpu.includes("apple")) keywords.push({ keyword: "apple", category: "chipset" });
+
   return keywords;
 }
