@@ -157,39 +157,57 @@ function PCInfoPanel() {
     ],
   };
 
-  // Mini panel on right edge
+  // Mini panel on right edge — expands on hover
   if (!expanded) {
     return (
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-[200px] rounded-l-lg overflow-hidden transition-all duration-300 animate-fade-in"
-        style={{ background: "hsl(220 16% 13% / 0.97)", border: "1px solid hsl(220 10% 20%)", borderRight: "none" }}>
-        <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
-          <Monitor className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-[10px] font-bold text-foreground tracking-wide uppercase">Infos sur le PC</span>
-          <span className="ml-auto text-[8px] text-green-400 font-bold">LIVE</span>
+      <div
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-10"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {/* Collapsed tab */}
+        <div
+          className={`transition-all duration-300 rounded-l-lg overflow-hidden ${hovered ? "w-[200px]" : "w-[36px]"}`}
+          style={{ background: "hsl(220 16% 13% / 0.97)", border: "1px solid hsl(220 10% 20%)", borderRight: "none" }}
+        >
+          {!hovered ? (
+            <div className="flex flex-col items-center py-3 gap-1.5">
+              <Monitor className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-[8px] text-green-400 font-bold">LIVE</span>
+            </div>
+          ) : (
+            <>
+              <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
+                <Monitor className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-[10px] font-bold text-foreground tracking-wide uppercase">Infos sur le PC</span>
+                <span className="ml-auto text-[8px] text-green-400 font-bold">LIVE</span>
+              </div>
+              <div className="px-3 py-2 space-y-2">
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <Monitor className="w-3 h-3 text-blue-400 shrink-0" />
+                  <span className="truncate">{osLabel}</span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <Cpu className="w-3 h-3 text-green-400 shrink-0" />
+                  <span className="truncate">{cpuLabel}</span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <Monitor className="w-3 h-3 text-green-400 shrink-0" />
+                  <span className="truncate">{gpuLabel}</span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <MemoryStick className="w-3 h-3 text-blue-400 shrink-0" />
+                  <span>{ramLabel}</span>
+                </div>
+              </div>
+              <button onClick={() => setExpanded(true)} className="w-full flex items-center justify-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors py-2 hover:bg-white/5" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
+                <span>•••</span>
+                <span>En apprendre plus</span>
+                <ChevronRight className="w-2.5 h-2.5" />
+              </button>
+            </>
+          )}
         </div>
-        <div className="px-3 py-2 space-y-2">
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <Monitor className="w-3 h-3 text-blue-400 shrink-0" />
-            <span className="truncate">{osLabel}</span>
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <Cpu className="w-3 h-3 text-green-400 shrink-0" />
-            <span className="truncate">{cpuLabel}</span>
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <Monitor className="w-3 h-3 text-green-400 shrink-0" />
-            <span className="truncate">{gpuLabel}</span>
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <MemoryStick className="w-3 h-3 text-blue-400 shrink-0" />
-            <span>{ramLabel}</span>
-          </div>
-        </div>
-        <button onClick={() => setExpanded(true)} className="w-full flex items-center justify-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors py-2 hover:bg-white/5" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
-          <span>•••</span>
-          <span>En apprendre plus</span>
-          <ChevronRight className="w-2.5 h-2.5" />
-        </button>
       </div>
     );
   }
