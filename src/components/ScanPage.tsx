@@ -97,6 +97,7 @@ function ScanButton({ label, onClick, glowing = true, progress = 0 }: { label: s
 /* PC Info Panel — uses real system detection */
 function PCInfoPanel() {
   const [expanded, setExpanded] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Global");
   const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
 
