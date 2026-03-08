@@ -518,6 +518,7 @@ export function ScanPage() {
   const [showUpToDate, setShowUpToDate] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showProModal, setShowProModal] = useState(false);
   const [showActivateModal, setShowActivateModal] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<Driver | null>(null);
