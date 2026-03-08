@@ -1,20 +1,43 @@
+import type { ElectronSystemInfo } from "@/types/electron";
+
 export interface SystemInfo {
   os: {
     name: string;
     version: string;
     architecture: string;
     platform: string;
+    hostname?: string;
+    uptime?: number;
   };
   cpu: {
     cores: number;
+    physicalCores?: number;
     name: string;
+    speed?: number;
   };
   gpu: {
     vendor: string;
     renderer: string;
+    vramMB?: number;
+    driverVersion?: string;
+    additionalGPUs?: { name: string; vendor: string; vramMB: number }[];
   };
   ram: {
     totalGB: number | null;
+    freeGB?: number | null;
+    usedGB?: number | null;
+    modules?: { capacityGB: number; manufacturer: string; speedMHz: number | null }[];
+  };
+  motherboard?: {
+    manufacturer: string;
+    product: string;
+  };
+  disks?: { model: string; sizeGB: number; interface: string; mediaType: string }[];
+  audio?: { manufacturer: string; name: string }[];
+  network: {
+    type: string | null;
+    downlink: number | null;
+    adapters?: { name: string; manufacturer?: string }[];
   };
   display: {
     width: number;
@@ -22,20 +45,82 @@ export interface SystemInfo {
     colorDepth: number;
     pixelRatio: number;
   };
-  network: {
-    type: string | null;
-    downlink: number | null;
-  };
   browser: {
     name: string;
     language: string;
   };
+  source: "electron" | "browser";
 }
 
 export interface HardwareKeyword {
   keyword: string;
   category: string;
 }
+
+// ── Electron-native detection (accurate) ──
+
+function fromElectron(e: ElectronSystemInfo): SystemInfo {
+  const primaryGPU = e.gpu[0] || { name: "Unknown GPU", vendor: "Unknown", vramMB: 0, driverVersion: "N/A" };
+  const additionalGPUs = e.gpu.slice(1).map(g => ({ name: g.name, vendor: g.vendor, vramMB: g.vramMB }));
+
+  return {
+    os: {
+      name: e.os.name,
+      version: e.os.version,
+      architecture: e.os.architecture,
+      platform: e.os.platform,
+      hostname: e.os.hostname,
+      uptime: e.os.uptime,
+    },
+    cpu: {
+      cores: e.cpu.cores,
+      physicalCores: e.cpu.physicalCores,
+      name: e.cpu.name,
+      speed: e.cpu.speed,
+    },
+    gpu: {
+      vendor: primaryGPU.vendor,
+      renderer: primaryGPU.name,
+      vramMB: primaryGPU.vramMB,
+      driverVersion: primaryGPU.driverVersion,
+      additionalGPUs: additionalGPUs.length > 0 ? additionalGPUs : undefined,
+    },
+    ram: {
+      totalGB: e.ram.totalGB,
+      freeGB: e.ram.freeGB,
+      usedGB: e.ram.usedGB,
+      modules: e.ram.modules?.map(m => ({
+        capacityGB: m.capacityGB,
+        manufacturer: m.manufacturer,
+        speedMHz: m.speedMHz,
+      })),
+    },
+    motherboard: e.motherboard ? {
+      manufacturer: e.motherboard.manufacturer,
+      product: e.motherboard.product,
+    } : undefined,
+    disks: e.disks,
+    audio: e.audio,
+    network: {
+      type: null,
+      downlink: null,
+      adapters: [
+        ...e.network.adapters.map(a => ({ name: a.name, manufacturer: undefined })),
+        ...e.network.detailedAdapters.map(a => ({ name: a.name, manufacturer: a.manufacturer })),
+      ],
+    },
+    display: {
+      width: screen.width,
+      height: screen.height,
+      colorDepth: screen.colorDepth,
+      pixelRatio: window.devicePixelRatio || 1,
+    },
+    browser: { name: "Electron", language: navigator.language || "en" },
+    source: "electron",
+  };
+}
+
+// ── Browser fallback detection ──
 
 function detectOS(): SystemInfo["os"] {
   const ua = navigator.userAgent;
@@ -48,9 +133,8 @@ function detectOS(): SystemInfo["os"] {
     const match = ua.match(/Windows NT (\d+\.\d+)/);
     if (match) {
       const ntVersion = parseFloat(match[1]);
-      if (ntVersion >= 10.0) {
-        version = ua.includes("Windows NT 10.0") ? "10/11" : `NT ${match[1]}`;
-      } else if (ntVersion >= 6.3) version = "8.1";
+      if (ntVersion >= 10.0) version = "10/11";
+      else if (ntVersion >= 6.3) version = "8.1";
       else if (ntVersion >= 6.2) version = "8";
       else if (ntVersion >= 6.1) version = "7";
       else version = `NT ${match[1]}`;
@@ -152,11 +236,32 @@ function detectBrowser(): SystemInfo["browser"] {
   else if (ua.includes("Chrome")) name = "Google Chrome";
   else if (ua.includes("Safari")) name = "Safari";
   else if (ua.includes("Opera") || ua.includes("OPR")) name = "Opera";
-
   return { name, language: navigator.language || "en" };
 }
 
+// ── Public API ──
+
+/** Detect system info — uses Electron native APIs if available, otherwise browser fallback */
+export async function detectSystemInfoAsync(): Promise<SystemInfo> {
+  if (window.electronAPI?.getSystemInfo) {
+    try {
+      const electronInfo = await window.electronAPI.getSystemInfo();
+      if (electronInfo) {
+        return fromElectron(electronInfo);
+      }
+    } catch (e) {
+      console.warn("Electron system detection failed, falling back to browser:", e);
+    }
+  }
+  return detectSystemInfoBrowser();
+}
+
+/** Synchronous browser-only detection (legacy compat) */
 export function detectSystemInfo(): SystemInfo {
+  return detectSystemInfoBrowser();
+}
+
+function detectSystemInfoBrowser(): SystemInfo {
   return {
     os: detectOS(),
     cpu: detectCPU(),
@@ -165,6 +270,7 @@ export function detectSystemInfo(): SystemInfo {
     display: detectDisplay(),
     network: detectNetwork(),
     browser: detectBrowser(),
+    source: "browser",
   };
 }
 
@@ -175,21 +281,21 @@ export function getGPUVendorHint(info: SystemInfo): string {
   if (renderer.includes("nvidia") || renderer.includes("geforce") || vendor.includes("nvidia")) return "nvidia";
   if (renderer.includes("radeon") || renderer.includes("amd") || vendor.includes("amd")) return "amd";
   if (renderer.includes("intel") || vendor.includes("intel")) return "intel";
+  if (renderer.includes("apple") || vendor.includes("apple")) return "apple";
   return "unknown";
 }
 
-/** Returns contextual keywords with category hints for matching drivers in the catalog */
+/** Returns contextual keywords with category hints for matching drivers */
 export function getHardwareKeywords(info: SystemInfo): HardwareKeyword[] {
   const keywords: HardwareKeyword[] = [];
 
-  // GPU-specific keywords with display/graphics category
+  // GPU keywords
   const gpu = info.gpu.renderer.toLowerCase();
   const gpuVendor = info.gpu.vendor.toLowerCase();
 
   if (gpu.includes("nvidia") || gpu.includes("geforce") || gpuVendor.includes("nvidia")) {
     keywords.push({ keyword: "nvidia", category: "display" });
     keywords.push({ keyword: "geforce", category: "display" });
-    // Extract specific GPU model if possible (e.g. "RTX 3060", "GTX 1080")
     const rtxMatch = gpu.match(/(rtx\s*\d{4}\s*\w*|gtx\s*\d{4}\s*\w*)/i);
     if (rtxMatch) keywords.push({ keyword: rtxMatch[1].trim().toLowerCase(), category: "display" });
   }
@@ -201,7 +307,7 @@ export function getHardwareKeywords(info: SystemInfo): HardwareKeyword[] {
   }
   if (gpu.includes("intel") || gpuVendor.includes("intel")) {
     keywords.push({ keyword: "intel", category: "display" });
-    const irisMatch = gpu.match(/(iris\s*\w*|uhd\s*\d*|hd\s*graphics\s*\d*)/i);
+    const irisMatch = gpu.match(/(iris\s*\w*|uhd\s*\d*|hd\s*graphics\s*\d*|arc\s*\w*)/i);
     if (irisMatch) keywords.push({ keyword: irisMatch[1].trim().toLowerCase(), category: "display" });
   }
 
@@ -211,11 +317,59 @@ export function getHardwareKeywords(info: SystemInfo): HardwareKeyword[] {
   if (os.includes("mac")) keywords.push({ keyword: "macos", category: "system" });
   if (os.includes("linux")) keywords.push({ keyword: "linux", category: "system" });
 
-  // CPU vendor keywords with processor category
+  // CPU vendor
   const cpu = info.cpu.name.toLowerCase();
   if (cpu.includes("intel")) keywords.push({ keyword: "intel", category: "chipset" });
   if (cpu.includes("amd") || cpu.includes("ryzen")) keywords.push({ keyword: "amd", category: "chipset" });
   if (cpu.includes("apple")) keywords.push({ keyword: "apple", category: "chipset" });
 
-  return keywords;
+  // Electron-specific: motherboard, audio, network adapters, disks
+  if (info.motherboard) {
+    const mb = info.motherboard.manufacturer.toLowerCase();
+    if (mb.includes("asus")) keywords.push({ keyword: "asus", category: "chipset" });
+    if (mb.includes("msi")) keywords.push({ keyword: "msi", category: "chipset" });
+    if (mb.includes("gigabyte")) keywords.push({ keyword: "gigabyte", category: "chipset" });
+    if (mb.includes("asrock")) keywords.push({ keyword: "asrock", category: "chipset" });
+  }
+
+  if (info.audio) {
+    for (const dev of info.audio) {
+      const name = dev.name.toLowerCase();
+      if (name.includes("realtek")) keywords.push({ keyword: "realtek", category: "audio" });
+      if (name.includes("creative")) keywords.push({ keyword: "creative", category: "audio" });
+      if (name.includes("nvidia")) keywords.push({ keyword: "nvidia", category: "audio" });
+      if (name.includes("amd")) keywords.push({ keyword: "amd", category: "audio" });
+    }
+  }
+
+  if (info.network?.adapters) {
+    for (const adapter of info.network.adapters) {
+      const name = (adapter.name + " " + (adapter.manufacturer || "")).toLowerCase();
+      if (name.includes("realtek")) keywords.push({ keyword: "realtek", category: "network" });
+      if (name.includes("intel")) keywords.push({ keyword: "intel", category: "network" });
+      if (name.includes("qualcomm") || name.includes("atheros")) keywords.push({ keyword: "qualcomm", category: "network" });
+      if (name.includes("broadcom")) keywords.push({ keyword: "broadcom", category: "network" });
+      if (name.includes("mediatek")) keywords.push({ keyword: "mediatek", category: "network" });
+    }
+  }
+
+  if (info.disks) {
+    for (const disk of info.disks) {
+      const model = disk.model.toLowerCase();
+      if (model.includes("samsung")) keywords.push({ keyword: "samsung", category: "storage" });
+      if (model.includes("western digital") || model.includes("wd")) keywords.push({ keyword: "western digital", category: "storage" });
+      if (model.includes("seagate")) keywords.push({ keyword: "seagate", category: "storage" });
+      if (model.includes("crucial") || model.includes("micron")) keywords.push({ keyword: "crucial", category: "storage" });
+      if (model.includes("kingston")) keywords.push({ keyword: "kingston", category: "storage" });
+    }
+  }
+
+  // Deduplicate
+  const seen = new Set<string>();
+  return keywords.filter(k => {
+    const key = `${k.keyword}:${k.category}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
