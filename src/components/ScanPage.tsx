@@ -116,10 +116,13 @@ function PCInfoPanel() {
     { id: "Audio", icon: <Volume2 className="w-3.5 h-3.5 text-green-400" /> },
   ];
 
-  const isElectron = sysInfo?.source === "electron";
-  const reliabilityBadge = isElectron
+  const isElectron = sysInfo?.source === "electron" || sysInfo?.source === "electron-limited";
+  const isFullElectron = sysInfo?.source === "electron";
+  const reliabilityBadge = isFullElectron
     ? <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold ml-1">Natif</span>
-    : <span className="text-[8px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-bold ml-1">Estimé</span>;
+    : isElectron
+      ? <span className="text-[8px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded font-bold ml-1">Partiel</span>
+      : <span className="text-[8px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-bold ml-1">Estimé</span>;
   const osLabel = sysInfo ? `${sysInfo.os.name} ${sysInfo.os.version}` : "Detecting...";
   const cpuLabel = sysInfo ? sysInfo.cpu.name : "Detecting...";
   const gpuLabel = sysInfo ? sysInfo.gpu.renderer : "Detecting...";
