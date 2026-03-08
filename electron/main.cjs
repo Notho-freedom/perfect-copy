@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { setupWindowControls } = require("./windowControls.cjs");
-const { getSystemInfo } = require("./systemInfo.js");
+const { getSystemInfo } = require("./systemInfo.cjs");
 
 let mainWindow;
 
