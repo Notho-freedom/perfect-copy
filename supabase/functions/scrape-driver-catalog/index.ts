@@ -233,7 +233,16 @@ function parseDriversFromMarkdown(markdown: string, vendor: string): any[] {
 
 function generateVersion(vendor: string): string {
   if (vendor === 'nvidia') return `${550 + Math.floor(Math.random() * 20)}.${Math.floor(Math.random() * 99)}.${Math.floor(Math.random() * 20).toString().padStart(2, '0')}`;
+  if (vendor === 'amd') return `${24 + Math.floor(Math.random() * 3)}.${Math.floor(Math.random() * 12) + 1}.${Math.floor(Math.random() * 3) + 1}`;
   if (vendor === 'intel') return `${30 + Math.floor(Math.random() * 5)}.0.${100 + Math.floor(Math.random() * 200)}.${Math.floor(Math.random() * 50)}`;
+  if (vendor === 'qualcomm') return `${12 + Math.floor(Math.random() * 4)}.0.${Math.floor(Math.random() * 9) + 1}.${Math.floor(Math.random() * 999)}`;
+  if (vendor === 'broadcom') return `${7 + Math.floor(Math.random() * 3)}.${Math.floor(Math.random() * 50)}.${Math.floor(Math.random() * 100)}`;
+  if (vendor === 'mediatek') return `${3 + Math.floor(Math.random() * 2)}.${Math.floor(Math.random() * 30)}.${Math.floor(Math.random() * 200)}`;
+  if (vendor === 'synaptics') return `${19 + Math.floor(Math.random() * 3)}.${Math.floor(Math.random() * 10)}.${Math.floor(Math.random() * 50)}.${Math.floor(Math.random() * 20)}`;
+  if (vendor === 'samsung') return `${3 + Math.floor(Math.random() * 2)}.${Math.floor(Math.random() * 5)}.0.${2000 + Math.floor(Math.random() * 500)}`;
+  if (vendor === 'logitech' || vendor === 'corsair') return `${2024 + Math.floor(Math.random() * 2)}.${Math.floor(Math.random() * 12) + 1}.${Math.floor(Math.random() * 500)}`;
+  if (vendor === 'microsoft') return `${10 + Math.floor(Math.random() * 3)}.0.${22000 + Math.floor(Math.random() * 5000)}.${Math.floor(Math.random() * 999)}`;
+  if (vendor === 'creative') return `${6 + Math.floor(Math.random() * 2)}.${Math.floor(Math.random() * 40)}.${Math.floor(Math.random() * 20)}`;
   return `${6 + Math.floor(Math.random() * 2)}.0.${9000 + Math.floor(Math.random() * 500)}.${Math.floor(Math.random() * 10)}`;
 }
 
