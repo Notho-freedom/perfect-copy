@@ -143,6 +143,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          category: string
+          id: string
+          session_id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          session_id: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          session_id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
