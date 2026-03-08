@@ -109,6 +109,7 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
 
       <div className="flex flex-1 min-h-0">
         {/* Sidebar */}
+        <div className="w-[100px] shrink-0 flex flex-col items-center" style={{ background: "hsl(220 18% 8%)" }}>
           {/* Hamburger — top */}
           <button
             onClick={() => setMenuOpen(true)}
@@ -119,25 +120,25 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
 
           {/* Nav items — centered */}
           <div className="flex-1 flex flex-col items-center justify-center gap-1 w-full">
-          {sidebarItems.map((item) => {
-            const active = currentPage === item.id;
-            const Icon = iconComponents[item.id];
-            return (
-              <button
-                key={item.id}
-                onClick={() => onPageChange(item.id)}
-                className={`relative w-full flex flex-col items-center gap-1.5 py-4 transition-all duration-200 hover-scale-sm ${
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                }`}
-              >
-                {active && (
-                  <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary shadow-lg shadow-primary/50 transition-all duration-300" />
-                )}
-                <Icon active={active} />
-                <span className={`text-[11px] font-medium transition-colors duration-200 ${active ? "text-primary" : ""}`}>{item.label}</span>
-              </button>
-            );
-          })}
+            {sidebarItems.map((item) => {
+              const active = currentPage === item.id;
+              const Icon = iconComponents[item.id];
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onPageChange(item.id)}
+                  className={`relative w-full flex flex-col items-center gap-1.5 py-4 transition-all duration-200 hover-scale-sm ${
+                    active ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  }`}
+                >
+                  {active && (
+                    <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary shadow-lg shadow-primary/50 transition-all duration-300" />
+                  )}
+                  <Icon active={active} />
+                  <span className={`text-[11px] font-medium transition-colors duration-200 ${active ? "text-primary" : ""}`}>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
