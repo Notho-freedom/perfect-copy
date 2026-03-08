@@ -49,7 +49,7 @@ export interface SystemInfo {
     name: string;
     language: string;
   };
-  source: "electron" | "browser";
+  source: "electron" | "browser" | "electron-limited";
 }
 
 export interface HardwareKeyword {
@@ -229,11 +229,26 @@ function detectBrowser(): SystemInfo["browser"] {
 
 // ── Public API ──
 
+/** Check if running inside Electron */
+export function isRunningInElectron(): boolean {
+  // 1. Check preload bridge flag
+  if (window.electronAPI?.isElectron) return true;
+  // 2. Check userAgent
+  if (navigator.userAgent.toLowerCase().includes("electron")) return true;
+  // 3. Check for node process
+  if (typeof process !== "undefined" && process.versions && (process.versions as any).electron) return true;
+  return false;
+}
+
 /** Detect system info — uses Electron native APIs if available, otherwise browser fallback */
 export async function detectSystemInfoAsync(): Promise<SystemInfo> {
-  if (window.electronAPI?.getSystemInfo) {
+  const inElectron = isRunningInElectron();
+  console.log("[SystemDetection] Environment:", inElectron ? "Electron" : "Browser", "| electronAPI:", !!window.electronAPI, "| getSystemInfo:", !!window.electronAPI?.getSystemInfo);
+  
+  if (inElectron && window.electronAPI?.getSystemInfo) {
     try {
       const electronInfo = await window.electronAPI.getSystemInfo();
+      console.log("[SystemDetection] Electron data received:", !!electronInfo);
       if (electronInfo) {
         return fromElectron(electronInfo);
       }
@@ -241,7 +256,13 @@ export async function detectSystemInfoAsync(): Promise<SystemInfo> {
       console.warn("Electron system detection failed, falling back to browser:", e);
     }
   }
-  return detectSystemInfoBrowser();
+  
+  // If we're in Electron but getSystemInfo failed, still mark source appropriately
+  const browserInfo = detectSystemInfoBrowser();
+  if (inElectron) {
+    browserInfo.source = "electron-limited";
+  }
+  return browserInfo;
 }
 
 /** Synchronous browser-only detection (legacy compat) */
