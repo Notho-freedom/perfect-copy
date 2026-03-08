@@ -863,7 +863,7 @@ export function ScanPage() {
       <PCInfoPanel />
 
       {/* Modals */}
-      <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
+      <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} drivers={outdatedDrivers} />
       <ActivateModal open={showActivateModal} onClose={() => setShowActivateModal(false)} />
       {selectedDetail && <DriverDetailPanel driver={selectedDetail} onClose={() => setSelectedDetail(null)} />}
     </div>
