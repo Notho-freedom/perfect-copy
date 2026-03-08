@@ -49,7 +49,7 @@ export interface SystemInfo {
     name: string;
     language: string;
   };
-  source: "electron" | "browser";
+  source: "electron" | "browser" | "electron-limited";
 }
 
 export interface HardwareKeyword {
