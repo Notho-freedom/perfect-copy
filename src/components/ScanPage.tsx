@@ -804,6 +804,14 @@ export function ScanPage() {
                       {driver.isPro && (
                         <span className="text-[7px] bg-accent/20 text-accent px-1.5 py-0.5 rounded font-bold">PRO</span>
                       )}
+                      {driver.matchConfidence === 'exact' && (
+                        <span className="text-[7px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5">
+                          <Shield className="w-2.5 h-2.5" /> Vérifié
+                        </span>
+                      )}
+                      {driver.matchConfidence === 'partial' && (
+                        <span className="text-[7px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold">Compatible</span>
+                      )}
                       {isUpdated && <Check className="w-3.5 h-3.5 text-green-400" />}
                     </div>
                     <div className="text-[10px] text-muted-foreground mt-0.5">{driver.category}</div>
