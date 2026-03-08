@@ -94,10 +94,15 @@ function ScanButton({ label, onClick, glowing = true, progress = 0 }: { label: s
   );
 }
 
-/* PC Info Panel — mini centered on right edge, expands to full system info dialog */
+/* PC Info Panel — uses real system detection */
 function PCInfoPanel() {
   const [expanded, setExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Global");
+  const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
+
+  useEffect(() => {
+    setSysInfo(detectSystemInfo());
+  }, []);
 
   const categories = [
     { id: "Global", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
@@ -105,23 +110,49 @@ function PCInfoPanel() {
     { id: "Processeur et Carte Mère", icon: <Cpu className="w-3.5 h-3.5 text-green-400" /> },
     { id: "Dispositif de Mémoire", icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" /> },
     { id: "Affichage", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
-    { id: "Disques", icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" /> },
     { id: "Réseau", icon: <Wifi className="w-3.5 h-3.5 text-green-400" /> },
-    { id: "Autres périphériques", icon: <Usb className="w-3.5 h-3.5 text-muted-foreground" /> },
   ];
+
+  const osLabel = sysInfo ? `${sysInfo.os.name} ${sysInfo.os.version}` : "Detecting...";
+  const cpuLabel = sysInfo ? sysInfo.cpu.name : "Detecting...";
+  const gpuLabel = sysInfo ? sysInfo.gpu.renderer : "Detecting...";
+  const ramLabel = sysInfo?.ram.totalGB ? `${sysInfo.ram.totalGB} GB` : "N/A";
+  const displayLabel = sysInfo ? `${sysInfo.display.width} x ${sysInfo.display.height} (${sysInfo.display.pixelRatio}x)` : "Detecting...";
+  const networkLabel = sysInfo?.network.type ? `${sysInfo.network.type}${sysInfo.network.downlink ? ` (${sysInfo.network.downlink} Mbps)` : ""}` : "N/A";
+  const browserLabel = sysInfo ? `${sysInfo.browser.name} (${sysInfo.browser.language})` : "Detecting...";
 
   const systemInfo: Record<string, { icon: React.ReactNode; label: string; value: string }[]> = {
     Global: [
-      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Système d'exploitation", value: "Microsoft Windows 11 Professionnel" },
-      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz" },
-      { icon: <Monitor className="w-3.5 h-3.5 text-green-400" />, label: "Carte graphique", value: "NVIDIA GeForce RTX 3050 Ti Laptop GPU (4.0 G...)" },
-      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "Mémoire", value: "6.6 GB Gratuit (39.7 GB Total)" },
-      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Moniteur", value: "Moniteur Plug-and-Play générique (1920 x 1080 ...)" },
-      { icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" />, label: "Disque de stockage", value: "2491.1 GB Gratuit (5706.6 GB Total)" },
-      { icon: <Volume2 className="w-3.5 h-3.5 text-blue-400" />, label: "Audio", value: "Technologie Intel® Smart Sound pour micropho..." },
-      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Carte mère", value: "Micro-Star International Co., Ltd. (MS-16R6)" },
-      { icon: <Mouse className="w-3.5 h-3.5 text-purple-400" />, label: "Souris", value: "Souris HID" },
-      { icon: <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="5" width="12" height="7" rx="1" /><rect x="5" y="3" width="6" height="2" rx="0.5" /></svg>, label: "Clavier", value: "Clavier standard PS/2" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Système d'exploitation", value: osLabel },
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: cpuLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-green-400" />, label: "Carte graphique", value: gpuLabel },
+      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "Mémoire", value: ramLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Moniteur", value: displayLabel },
+      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Réseau", value: networkLabel },
+    ],
+    "Système d'Exploitation": [
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "OS", value: osLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Architecture", value: sysInfo?.os.architecture || "N/A" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Platform", value: sysInfo?.os.platform || "N/A" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Navigateur", value: browserLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Langue", value: sysInfo?.browser.language || "N/A" },
+    ],
+    "Processeur et Carte Mère": [
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: cpuLabel },
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Cœurs logiques", value: sysInfo ? `${sysInfo.cpu.cores}` : "N/A" },
+    ],
+    "Dispositif de Mémoire": [
+      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "RAM", value: ramLabel },
+    ],
+    "Affichage": [
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "GPU", value: gpuLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Vendor", value: sysInfo?.gpu.vendor || "N/A" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Résolution", value: displayLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Profondeur couleur", value: sysInfo ? `${sysInfo.display.colorDepth} bits` : "N/A" },
+    ],
+    "Réseau": [
+      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Type", value: sysInfo?.network.type || "N/A" },
+      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Débit", value: sysInfo?.network.downlink ? `${sysInfo.network.downlink} Mbps` : "N/A" },
     ],
   };
 
@@ -133,23 +164,24 @@ function PCInfoPanel() {
         <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
           <Monitor className="w-3.5 h-3.5 text-blue-400" />
           <span className="text-[10px] font-bold text-foreground tracking-wide uppercase">Infos sur le PC</span>
+          <span className="ml-auto text-[8px] text-green-400 font-bold">LIVE</span>
         </div>
         <div className="px-3 py-2 space-y-2">
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <Monitor className="w-3 h-3 text-blue-400 shrink-0" />
-            <span className="truncate">Microsoft Windows 11 Professi...</span>
+            <span className="truncate">{osLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <Cpu className="w-3 h-3 text-green-400 shrink-0" />
-            <span className="truncate">11th Gen Intel(R) Core(TM) i7-...</span>
+            <span className="truncate">{cpuLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <Monitor className="w-3 h-3 text-green-400 shrink-0" />
-            <span className="truncate">NVIDIA GeForce RTX 3050 Ti La...</span>
+            <span className="truncate">{gpuLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <MemoryStick className="w-3 h-3 text-blue-400 shrink-0" />
-            <span>39.7 GB</span>
+            <span>{ramLabel}</span>
           </div>
         </div>
         <button onClick={() => setExpanded(true)} className="w-full flex items-center justify-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors py-2 hover:bg-white/5" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
@@ -166,22 +198,20 @@ function PCInfoPanel() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in" onClick={() => setExpanded(false)}>
       <div className="w-[680px] max-h-[480px] rounded-lg overflow-hidden flex flex-col animate-scale-in" onClick={e => e.stopPropagation()}
         style={{ background: "hsl(220 16% 12%)", border: "1px solid hsl(220 10% 22%)" }}>
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 shrink-0" style={{ background: "hsl(220 14% 10%)", borderBottom: "1px solid hsl(220 10% 18%)" }}>
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
               <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 8H6v-1c0-1 .5-1.5 2-1.5s2 .5 2 1.5v1z"/></svg>
             </div>
-            <span className="text-xs font-bold text-foreground">Informations sur le système IObit</span>
+            <span className="text-xs font-bold text-foreground">Informations système (détection réelle)</span>
+            <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold">LIVE</span>
           </div>
           <button onClick={() => setExpanded(false)} className="p-1 rounded hover:bg-white/10 transition-colors">
             <X className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex flex-1 min-h-0">
-          {/* Left categories */}
           <div className="w-[180px] shrink-0 py-2 overflow-auto custom-scrollbar" style={{ background: "hsl(220 16% 11%)", borderRight: "1px solid hsl(220 10% 18%)" }}>
             {categories.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
@@ -192,7 +222,6 @@ function PCInfoPanel() {
             ))}
           </div>
 
-          {/* Right details */}
           <div className="flex-1 p-4 overflow-auto custom-scrollbar">
             <div className="space-y-1">
               {(systemInfo[selectedCategory] || systemInfo.Global).map((item, i) => (
@@ -206,12 +235,7 @@ function PCInfoPanel() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-4 py-3 shrink-0" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
-          <button className="px-6 py-2 rounded text-xs font-bold transition-all duration-200 hover:bg-white/10"
-            style={{ background: "hsl(220 14% 16%)", border: "1px solid hsl(220 10% 25%)", color: "hsl(0 0% 80%)" }}>
-            Exportation...
-          </button>
           <button onClick={() => setExpanded(false)}
             className="bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-bold px-6 py-2 rounded transition-all duration-200">
             Fermer
