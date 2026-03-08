@@ -852,7 +852,33 @@ export function ScanPage() {
           </div>
         </div>
 
-        {/* Driver list */}
+        {/* Category filter bar */}
+        <div className="flex items-center gap-1.5 px-5 mb-2 overflow-x-auto custom-scrollbar">
+          {Object.entries(categoryGroups).map(([key, group]) => {
+            const count = categoryCounts[key] || 0;
+            if (key !== "all" && count === 0) return null;
+            const isActive = categoryFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setCategoryFilter(key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 shrink-0 ${
+                  isActive
+                    ? "bg-primary/20 text-primary border border-primary/40"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                {group.icon}
+                <span>{group.label}</span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-primary/30 text-primary" : "bg-white/10 text-muted-foreground"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+
         <div className="flex-1 overflow-auto px-5 pb-3 custom-scrollbar">
           <div className="space-y-0.5">
             {filteredOutdated.map((driver, idx) => {
