@@ -46,10 +46,12 @@ Deno.serve(async (req) => {
       query = query.contains('os_compatibility', [normalizedOS]);
     }
 
-    // Pre-filter by detected vendors — only fetch drivers from relevant vendors
+    // Pre-filter by detected vendors — only fetch drivers from relevant vendors (case-insensitive)
     if (detected_vendors && Array.isArray(detected_vendors) && detected_vendors.length > 0) {
       const vendorsLower = detected_vendors.map((v: string) => v.toLowerCase());
-      query = query.in('vendor', vendorsLower);
+      // Build case-insensitive filter: vendor.ilike any of the detected vendors
+      const orFilter = vendorsLower.map(v => `vendor.ilike.${v}`).join(',');
+      query = query.or(orFilter);
     }
 
     const { data: allDrivers, error } = await query;
