@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { hardware_keywords, os, gpu_vendor } = await req.json();
+    const { hardware_keywords, os, gpu_vendor, detected_vendors } = await req.json();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -35,15 +35,21 @@ Deno.serve(async (req) => {
 
     const normalizedOS = normalizeOS(os || '');
 
-    // Query with OS compatibility filter
+    // Query with OS compatibility + vendor pre-filtering
     let query = supabase
       .from('driver_catalog')
       .select('*')
       .order('category');
 
-    // Filter by OS compatibility using the array contains operator
+    // Filter by OS compatibility
     if (normalizedOS) {
       query = query.contains('os_compatibility', [normalizedOS]);
+    }
+
+    // Pre-filter by detected vendors — only fetch drivers from relevant vendors
+    if (detected_vendors && Array.isArray(detected_vendors) && detected_vendors.length > 0) {
+      const vendorsLower = detected_vendors.map((v: string) => v.toLowerCase());
+      query = query.in('vendor', vendorsLower);
     }
 
     const { data: allDrivers, error } = await query;

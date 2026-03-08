@@ -582,14 +582,16 @@ export function ScanPage() {
     setUpdatedDrivers(new Set());
     setCurrentUpdatingId(null);
 
-    // Fetch real driver data from Supabase with contextual keywords
-    const sysInfo = detectSystemInfo();
-    const keywords = getHardwareKeywords(sysInfo);
-    const gpuVendor = getGPUVendorHint(sysInfo);
-    
-    supabase.functions.invoke('get-driver-info', {
-      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase(), gpu_vendor: gpuVendor },
-    }).then(({ data, error }) => {
+    // Fetch real driver data from Supabase with vendor-targeted filtering
+    detectSystemInfoAsync().then(asyncSysInfo => {
+      const keywords = getHardwareKeywords(asyncSysInfo);
+      const gpuVendor = getGPUVendorHint(asyncSysInfo);
+      const detectedVendors = getDetectedVendors(asyncSysInfo);
+      
+      return supabase.functions.invoke('get-driver-info', {
+        body: { hardware_keywords: keywords, os: asyncSysInfo.os.name.toLowerCase(), gpu_vendor: gpuVendor, detected_vendors: detectedVendors },
+      }).then(({ data, error }) => {
+        const sysInfo = asyncSysInfo;
       if (!error && data?.outdated) {
         const drivers: Driver[] = data.outdated.map((d: any) => ({
           id: d.id,
@@ -620,6 +622,7 @@ export function ScanPage() {
           up_to_date_count: data.upToDate?.length || 0,
         }).then(() => {});
       }
+      });
     }).catch(() => {
       // Fallback to local data
       setDataSource("local");
