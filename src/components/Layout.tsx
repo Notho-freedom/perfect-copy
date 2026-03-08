@@ -82,7 +82,7 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
   return (
     <div className="flex flex-col h-screen max-h-screen overflow-hidden select-none" style={{ background: "hsl(220 18% 7%)" }}>
       {/* Title bar */}
-      <div className="flex items-center justify-between h-9 px-3 shrink-0" style={{ background: "hsl(220 18% 8%)" }}>
+      <div className="flex items-center justify-between h-9 px-3 shrink-0" style={{ background: "hsl(220 18% 8%)", WebkitAppRegion: "drag" } as React.CSSProperties}>
         <div className="flex items-center">
           <button onClick={() => setMenuOpen(true)} className="p-1.5 rounded hover:bg-white/10 transition-colors mr-4">
             <Menu className="w-5 h-5 text-muted-foreground" />
@@ -92,20 +92,20 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
           <span className="text-[13px] font-medium text-muted-foreground tracking-wide">Driver Booster 13.1</span>
           <span className="text-[9px] border border-primary/60 text-primary px-1.5 py-0.5 rounded font-bold leading-none">FREE</span>
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center mr-2 shadow-lg shadow-red-500/30">
             <span className="text-white text-[10px] font-bold">%</span>
           </div>
           <button onClick={() => setChatOpen(true)} className="p-1.5 rounded hover:bg-white/10 transition-colors">
             <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
-          <button className="p-1.5 rounded hover:bg-white/10 transition-colors">
+          <button onClick={() => window.electronAPI?.minimize()} className="p-1.5 rounded hover:bg-white/10 transition-colors">
             <Minus className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
-          <button className="p-1.5 rounded hover:bg-white/10 transition-colors">
+          <button onClick={() => window.electronAPI?.maximize()} className="p-1.5 rounded hover:bg-white/10 transition-colors">
             <Square className="w-3 h-3 text-muted-foreground" />
           </button>
-          <button className="p-1.5 rounded hover:bg-red-600/80 transition-colors">
+          <button onClick={() => window.electronAPI?.close()} className="p-1.5 rounded hover:bg-red-600/80 transition-colors">
             <X className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
         </div>
