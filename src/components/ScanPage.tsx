@@ -43,6 +43,21 @@ function TickMarks({ radius, count, progress = 0 }: { radius: number; count: num
 function ScanButton({ label, onClick, glowing = true, progress = 0 }: { label: string; onClick: () => void; glowing?: boolean; progress?: number }) {
   return (
     <div className="relative w-52 h-52 cursor-pointer group transition-transform duration-300 hover:scale-105 active:scale-95" onClick={onClick}>
+      {/* Orbiting particles */}
+      {glowing && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="scan-particle-1 absolute w-2 h-2 rounded-full" style={{ background: "hsl(0 80% 55%)", boxShadow: "0 0 8px 3px hsl(0 72% 51% / 0.7), 0 0 16px 6px hsl(0 72% 51% / 0.3)" }} />
+          <div className="scan-particle-2 absolute w-1.5 h-1.5 rounded-full" style={{ background: "hsl(20 90% 60%)", boxShadow: "0 0 6px 2px hsl(20 80% 55% / 0.7), 0 0 12px 5px hsl(20 80% 55% / 0.3)" }} />
+          <div className="scan-particle-3 absolute w-1 h-1 rounded-full" style={{ background: "hsl(0 70% 70%)", boxShadow: "0 0 6px 2px hsl(0 60% 60% / 0.6)" }} />
+        </div>
+      )}
+      {/* Rotating outer glow ring */}
+      {glowing && (
+        <div className="absolute -inset-3 rounded-full scan-glow-ring pointer-events-none" style={{
+          background: "conic-gradient(from 0deg, transparent 0deg, hsl(0 72% 51% / 0.3) 60deg, transparent 120deg, hsl(0 72% 51% / 0.15) 200deg, transparent 260deg, hsl(0 72% 51% / 0.25) 320deg, transparent 360deg)",
+          filter: "blur(6px)",
+        }} />
+      )}
       <div className="absolute inset-0 rounded-full metallic-ring shadow-xl" />
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 150 150">
         <TickMarks radius={72} count={60} progress={progress} />
