@@ -82,7 +82,7 @@ export function BoostPage() {
     <div className="flex-1 flex items-center justify-center p-8 animate-fade-in">
       <div className="grid grid-cols-3 gap-4 w-full max-w-[820px]">
         {cards.map((card, i) => (
-          <div key={i} className="rounded-lg flex flex-col items-center text-center p-6 transition-all duration-300 hover:bg-white/[0.03]" style={{
+          <div key={i} className="rounded-lg flex flex-col items-center text-center p-6 hover-lift hover-glow" style={{
             background: "hsl(220 14% 14%)",
             border: "1px solid hsl(220 10% 20%)",
             animationDelay: `${i * 100}ms`,
@@ -116,7 +116,7 @@ export function BoostPage() {
             {/* Button — uniform height, same line across cards */}
             <div className="flex items-stretch w-full max-w-[180px] rounded overflow-hidden mt-auto h-9">
               <button onClick={card.onAction}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-all duration-200">
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold transition-all duration-200 btn-press">
                 {card.buttonLabel}
               </button>
               {card.hasDropdown && (

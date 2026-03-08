@@ -175,7 +175,7 @@ export function ActionCenterPage() {
       <div className="space-y-3">
         {apps.map((app, idx) => (
           <div key={app.name}
-            className="flex items-center gap-4 rounded-lg p-4 relative overflow-hidden transition-all duration-200 hover:bg-white/5 cursor-pointer group"
+            className="flex items-center gap-4 rounded-lg p-4 relative overflow-hidden hover-lift hover-glow cursor-pointer group"
             style={{
               background: "hsl(220 14% 14%)",
               border: "1px solid hsl(220 10% 20%)",
@@ -201,7 +201,7 @@ export function ActionCenterPage() {
             </div>
 
             <button onClick={(e) => { e.stopPropagation(); }}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-bold px-6 py-2.5 rounded transition-all duration-200 shrink-0 shadow-lg shadow-accent/20 hover:shadow-accent/40">
+              className="bg-accent hover:bg-accent/90 text-accent-foreground text-sm font-bold px-6 py-2.5 rounded btn-press shrink-0 shadow-lg shadow-accent/20 hover:shadow-accent/40 transition-all duration-200">
               Install now
             </button>
           </div>

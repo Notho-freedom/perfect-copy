@@ -121,7 +121,7 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
               <button
                 key={item.id}
                 onClick={() => onPageChange(item.id)}
-                className={`relative w-full flex flex-col items-center gap-1.5 py-4 transition-all duration-200 ${
+                className={`relative w-full flex flex-col items-center gap-1.5 py-4 transition-all duration-200 hover-scale-sm ${
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                 }`}
               >

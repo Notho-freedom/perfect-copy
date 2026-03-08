@@ -10,7 +10,7 @@ export function ToolsPage() {
       <div className="flex gap-4 mb-8">
         <div className="flex gap-3 flex-1">
           {/* Backup & Restore */}
-          <div className="flex-1 rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/5 transition-all duration-200 hover:scale-[1.02] min-h-[140px]" style={{
+          <div className="flex-1 rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover-lift hover-glow min-h-[140px]" style={{
             background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
           }}>
             <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "hsl(220 12% 18%)" }}>
@@ -22,7 +22,7 @@ export function ToolsPage() {
           </div>
 
           {/* Fix No Sound */}
-          <div className="flex-1 rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/5 transition-all duration-200 hover:scale-[1.02] min-h-[140px]" style={{
+          <div className="flex-1 rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover-lift hover-glow min-h-[140px]" style={{
             background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
           }}>
             <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "hsl(220 12% 18%)" }}>
@@ -34,7 +34,7 @@ export function ToolsPage() {
           </div>
 
           {/* Fix Device Error */}
-          <div className="flex-1 rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/5 transition-all duration-200 hover:scale-[1.02] relative min-h-[140px]" style={{
+          <div className="flex-1 rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover-lift hover-glow relative min-h-[140px]" style={{
             background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
           }}>
             <div className="diagonal-badge diagonal-badge-pro" />
@@ -58,7 +58,7 @@ export function ToolsPage() {
             { label: "Fix Network Failure", icon: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></> },
             { label: "Fix Bad Resolution", icon: <><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></> },
           ].map(item => (
-            <div key={item.label} className="rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-all duration-200" style={{
+            <div key={item.label} className="rounded-lg p-3 flex items-center gap-3 cursor-pointer hover-lift hover-glow" style={{
               background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
             }}>
               <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "hsl(220 12% 18%)" }}>
@@ -89,7 +89,7 @@ export function ToolsPage() {
           { label: "Free & Fast VPN", isNew: true, icon: "shield" },
           { label: "Screen Recorder", isNew: true, icon: "rec" },
         ].map(tool => (
-          <div key={tool.label} className="rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/5 transition-all duration-200 hover:scale-[1.02] relative overflow-hidden min-h-[130px]" style={{
+          <div key={tool.label} className="rounded-lg p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover-lift hover-glow relative overflow-hidden min-h-[130px]" style={{
             background: "hsl(220 14% 14%)", border: "1px solid hsl(220 10% 20%)"
           }}>
             {tool.isNew && (
