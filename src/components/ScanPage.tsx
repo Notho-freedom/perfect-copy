@@ -693,6 +693,9 @@ export function ScanPage() {
             <span className="text-[13px] text-foreground">
               <span className="text-primary font-bold">{outdatedDrivers.length} device drivers</span> <span className="font-semibold">outdated</span>
             </span>
+            {dataSource === "cloud" && (
+              <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold ml-2">CLOUD</span>
+            )}
             <button onClick={() => { setScanState("idle"); setProgress(0); }}
               className="text-[11px] text-muted-foreground hover:text-foreground underline ml-2 transition-colors">
               Scan again
