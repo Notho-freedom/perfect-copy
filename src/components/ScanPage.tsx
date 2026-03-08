@@ -485,6 +485,47 @@ export function ScanPage() {
     setUpdatingDrivers(new Map());
     setUpdatedDrivers(new Set());
     setCurrentUpdatingId(null);
+
+    // Fetch real driver data from Supabase
+    const sysInfo = detectSystemInfo();
+    const keywords = getHardwareKeywords(sysInfo);
+    
+    supabase.functions.invoke('get-driver-info', {
+      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase() },
+    }).then(({ data, error }) => {
+      if (!error && data?.outdated) {
+        const drivers: Driver[] = data.outdated.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          category: d.category,
+          currentVersion: d.currentVersion,
+          currentDate: d.currentDate,
+          newVersion: d.newVersion,
+          newDate: d.newDate,
+          isPro: d.isPro,
+          icon: d.icon,
+        }));
+        setOutdatedDrivers(drivers);
+        setSelectedDrivers(new Set(drivers.map(d => d.id)));
+        setUpToDateDrivers(data.upToDate || fallbackUpToDate);
+        setDataSource("cloud");
+
+        // Log scan to history
+        supabase.from('scan_history').insert({
+          session_id: sessionIdRef.current,
+          os_detected: `${sysInfo.os.name} ${sysInfo.os.version}`,
+          cpu_detected: sysInfo.cpu.name,
+          gpu_detected: sysInfo.gpu.renderer,
+          ram_gb: sysInfo.ram.totalGB,
+          drivers_found: drivers.length + (data.upToDate?.length || 0),
+          outdated_count: drivers.length,
+          up_to_date_count: data.upToDate?.length || 0,
+        }).then(() => {});
+      }
+    }).catch(() => {
+      // Fallback to local data
+      setDataSource("local");
+    });
   }, []);
 
   const stopScan = useCallback(() => {
@@ -492,7 +533,7 @@ export function ScanPage() {
     setProgress(0);
   }, []);
 
-  // Scan progress
+  // Scan progress animation
   useEffect(() => {
     if (scanState !== "scanning") return;
     const interval = setInterval(() => {
