@@ -1,56 +1,43 @@
 
 
-# Driver Booster 13.1 — Exact Web Replica
+# Optimisation du scan par filtrage vendor basé sur le matériel détecté
 
-A fully interactive web clone of IObit Driver Booster 13.1, replicating the dark UI, all sections, and simulated interactions.
+## Concept
 
-## Design & Theme
-- Dark theme matching Driver Booster's dark gray/black color scheme with red accent colors
-- Left sidebar navigation with icon + label items (Scan/Update, Boost, Tools, Action Center)
-- Top header bar with app title "Driver Booster 13.1", FREE badge, and window control icons
-- Hamburger menu opening a slide-out panel (Settings, Driver Update History, Check for Updates, User Manual, Technical Support, Skin selector, etc.)
+Actuellement, l'edge function `get-driver-info` récupère **tous** les pilotes compatibles avec l'OS, puis les score côté serveur. L'idée est de **pré-filtrer par vendors détectés** : si le matériel détecté inclut NVIDIA, Realtek, Intel — on ne requête que les pilotes de ces vendors. Les autres sont exclus dès la requête SQL.
 
-## 1. Scan Page (Home)
-- Large circular **SCAN** button with red glow ring animation
-- Info banner: "Scan to check the status of drivers!"
-- On click: animated scanning state with circular progress bar, percentage counter, "Scanning..." text with current driver name cycling, and a **STOP** button
-- After scan completes: transitions to results view
+## Changements
 
-## 2. Scan Results / Update Page
-- Alert banner: "X device drivers outdated" with "Scan again" link
-- "Update Now" red button at top
-- PRO upgrade upsell banner
-- List of outdated drivers with: checkbox, icon, driver name, category badge (PRO), current version date, available version date, individual "Update" button
-- "UpToDate (N)" collapsed section at the bottom
-- Large circular **UPDATE** button in the center
-- PC Info widget on the right side (OS, CPU, GPU, RAM, "Learn More")
+### 1. Client — Extraire les vendors détectés (`src/lib/systemDetection.ts`)
 
-## 3. Boost Page
-- Three cards side by side: **Game Boost**, **Internet Boost**, **System Optimize**
-- Each with a gauge/icon graphic, status indicator, action button (Super Boost / Boost Now / Check Now), and description text
-- Game Boost has a "Configure" link and ON/OFF gauge
+Ajouter une fonction `getDetectedVendors(info: SystemInfo): string[]` qui retourne la liste des vendors pertinents extraits du matériel :
+- GPU vendor (nvidia, amd, intel)
+- Audio vendor (realtek, creative)
+- Network vendor (intel, qualcomm, broadcom, realtek, mediatek)
+- Storage vendor (samsung, western digital, seagate, crucial, kingston)
+- Motherboard vendor (asus, msi, gigabyte, asrock)
+- Toujours inclure "microsoft" (pilotes système génériques)
 
-## 4. Tools Page
-- **Hot Fix Tools** section: cards for Backup & Restore, Fix No Sound, Fix Device Error (with issue count)
-- Right sidebar actions: Clean Invalid Device Data (with count), Fix Network Failure, Fix Bad Resolution
-- **Other Useful Tools** section: grid of tool cards — Fix Incompatible Drivers, Offline Driver Updater, System Information, Free & Fast VPN, Screen Recorder (with NEW badges)
+### 2. Client — Passer les vendors au scan (`src/components/ScanPage.tsx`)
 
-## 5. Action Center Page
-- Info banner: "Make PC safer and faster with the following programs recommended by IObit"
-- Hide link at top right
-- List of recommended apps (iTop VPN, iTop Screen Recorder, iTop Easy Desktop, Advanced SystemCare) each with: HOT badge, icon, name, description, orange "Install now" button
+Dans `startScan`, appeler `getDetectedVendors()` et envoyer `detected_vendors` dans le body de l'appel à `get-driver-info`.
 
-## 6. Hamburger Menu (Slide-out)
-- Menu items: Settings, Driver Update History, Check for Updates, User Manual, Technical Support, Help Us Translate, What's New, About
-- **Skin** section at the bottom with theme preview thumbnail and color swatches
+### 3. Edge function — Filtrer par vendor (`get-driver-info/index.ts`)
 
-## 7. Bottom Promo Banner
-- Persistent promotional banner at the bottom with discount messaging and "Check It Out" / "Enter Code" actions
+- Recevoir `detected_vendors` dans le payload
+- Si la liste est non-vide, ajouter un filtre SQL `.in('vendor', detected_vendors)` pour ne récupérer que les pilotes des vendors détectés
+- Garder le scoring existant pour affiner parmi les pilotes filtrés
+- Supprimer le fallback qui ajoute des pilotes "génériques" quand peu de résultats (plus nécessaire car on cible précisément)
 
-## Interactions & Animations
-- Scan button: red glow pulse animation, click triggers scanning state
-- Scanning: circular progress animation with percentage, driver name cycling
-- Navigation between all sections via sidebar with active state highlighting
-- All buttons have hover effects
-- Simulated fake driver data (hardcoded list of realistic driver names, versions, dates)
+### 4. Utiliser `detectSystemInfoAsync` au lieu de `detectSystemInfo`
+
+Le scan utilise encore `detectSystemInfo()` (synchrone, browser-only). Passer à `detectSystemInfoAsync()` pour bénéficier des données Electron natives plus précises quand disponible.
+
+## Fichiers modifiés
+
+| Fichier | Changement |
+|---|---|
+| `src/lib/systemDetection.ts` | Nouvelle fonction `getDetectedVendors()` |
+| `src/components/ScanPage.tsx` | Passer `detected_vendors` + utiliser `detectSystemInfoAsync` |
+| `supabase/functions/get-driver-info/index.ts` | Filtrage SQL `.in('vendor', ...)` + suppression fallback générique |
 
