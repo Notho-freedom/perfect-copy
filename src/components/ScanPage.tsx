@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { outdatedDrivers as fallbackOutdated, upToDateDrivers as fallbackUpToDate, scanDriverNames, Driver } from "@/data/drivers";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp, Monitor, Volume2, Wifi, HardDrive, Mouse, Network, Usb, Info, Search, ChevronRight, X, Check, Crown, Shield, Zap, Star, ArrowLeft, RotateCcw, Trash2, EyeOff, Cpu, MemoryStick } from "lucide-react";
-import { detectSystemInfo, detectSystemInfoAsync, getHardwareKeywords, getGPUVendorHint, type SystemInfo } from "@/lib/systemDetection";
+import { detectSystemInfo, detectSystemInfoAsync, getHardwareKeywords, getGPUVendorHint, getDetectedVendors, type SystemInfo } from "@/lib/systemDetection";
 import { supabase } from "@/integrations/supabase/client";
 
 type ScanState = "idle" | "scanning" | "results-list" | "updating" | "update-complete";
