@@ -535,8 +535,9 @@ export function ScanPage() {
   const [updatedDrivers, setUpdatedDrivers] = useState<Set<string>>(new Set());
   const [currentUpdatingId, setCurrentUpdatingId] = useState<string | null>(null);
 
-  // Session ID for tracking
+  // Session ID and update timing
   const sessionIdRef = useRef(crypto.randomUUID());
+  const updateStartTimeRef = useRef<number>(0);
 
   // Category map for grouping
   const categoryGroups: Record<string, { label: string; icon: React.ReactNode; match: string[] }> = {
