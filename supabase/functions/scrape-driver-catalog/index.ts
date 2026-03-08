@@ -10,6 +10,10 @@ const VENDOR_URLS: Record<string, string[]> = {
     'https://www.nvidia.com/Download/index.aspx',
     'https://www.nvidia.com/en-us/drivers/',
   ],
+  amd: [
+    'https://www.amd.com/en/support/download/drivers.html',
+    'https://www.amd.com/en/support',
+  ],
   intel: [
     'https://www.intel.com/content/www/us/en/download-center/home.html',
     'https://downloadcenter.intel.com/',
@@ -17,6 +21,40 @@ const VENDOR_URLS: Record<string, string[]> = {
   realtek: [
     'https://www.realtek.com/Download/List?cate_id=593',
     'https://www.realtek.com/Download/List?cate_id=195',
+  ],
+  qualcomm: [
+    'https://www.qualcomm.com/products/technology/wi-fi',
+    'https://www.qualcomm.com/software/drivers',
+  ],
+  broadcom: [
+    'https://www.broadcom.com/support/download-search',
+  ],
+  mediatek: [
+    'https://www.mediatek.com/products/connectivity-and-networking',
+  ],
+  synaptics: [
+    'https://www.synaptics.com/products/touchpad-driver',
+  ],
+  logitech: [
+    'https://support.logi.com/hc/en-us/categories/360001702494',
+  ],
+  corsair: [
+    'https://www.corsair.com/us/en/downloads',
+  ],
+  samsung: [
+    'https://semiconductor.samsung.com/consumer-storage/support/downloads/',
+  ],
+  microsoft: [
+    'https://www.catalog.update.microsoft.com/Home.aspx',
+  ],
+  creative: [
+    'https://support.creative.com/Products/Products.aspx',
+  ],
+  asustek: [
+    'https://www.asus.com/support/download-center/',
+  ],
+  msi: [
+    'https://www.msi.com/support/download',
   ],
 };
 
