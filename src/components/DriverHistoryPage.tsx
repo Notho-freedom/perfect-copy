@@ -1,10 +1,12 @@
-import { ArrowLeft, Check, X, RotateCcw, Clock, Shield } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Check, X, RotateCcw, Clock, Shield, Database, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DriverHistoryPageProps {
   onBack: () => void;
 }
 
-const historyEntries = [
+const fallbackEntries = [
   { date: "2026-03-07", time: "14:32", driver: "NVIDIA GeForce RTX 3050 Ti", from: "31.0.15.5176", to: "32.0.15.6109", status: "success", category: "Display" },
   { date: "2026-03-07", time: "14:28", driver: "Realtek High Definition Audio", from: "6.0.9285.1", to: "6.0.9539.1", status: "success", category: "Audio" },
   { date: "2026-03-07", time: "14:25", driver: "Intel Wi-Fi 6 AX201", from: "22.230.0.8", to: "22.250.1.2", status: "success", category: "Network" },
@@ -16,6 +18,8 @@ const historyEntries = [
   { date: "2026-02-28", time: "08:55", driver: "AMD High Definition Audio", from: "10.0.1.24", to: "10.0.1.30", status: "success", category: "Audio" },
   { date: "2026-02-25", time: "19:10", driver: "Microsoft ISATAP Adapter", from: "10.0.22621.1", to: "10.0.22621.2", status: "success", category: "Network" },
 ];
+
+type HistoryEntry = typeof fallbackEntries[0];
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "success") {
@@ -40,12 +44,50 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function DriverHistoryPage({ onBack }: DriverHistoryPageProps) {
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>(fallbackEntries);
+  const [loading, setLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<"local" | "cloud">("local");
+
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const { data, error } = await supabase
+          .from('driver_updates')
+          .select('*')
+          .order('updated_at', { ascending: false })
+          .limit(50);
+
+        if (!error && data && data.length > 0) {
+          const entries: HistoryEntry[] = data.map(row => {
+            const d = new Date(row.updated_at);
+            return {
+              date: d.toISOString().split('T')[0],
+              time: d.toTimeString().slice(0, 5),
+              driver: row.driver_name,
+              from: row.from_version,
+              to: row.to_version,
+              status: row.status,
+              category: row.category,
+            };
+          });
+          setHistoryEntries(entries);
+          setDataSource("cloud");
+        }
+      } catch {
+        // Use fallback
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchHistory();
+  }, []);
+
   // Group by date
   const grouped = historyEntries.reduce((acc, entry) => {
     if (!acc[entry.date]) acc[entry.date] = [];
     acc[entry.date].push(entry);
     return acc;
-  }, {} as Record<string, typeof historyEntries>);
+  }, {} as Record<string, HistoryEntry[]>);
 
   const formatDate = (d: string) => {
     const date = new Date(d + "T00:00:00");
@@ -61,6 +103,11 @@ export function DriverHistoryPage({ onBack }: DriverHistoryPageProps) {
             <ArrowLeft className="w-4.5 h-4.5 text-muted-foreground" />
           </button>
           <h1 className="text-[15px] font-bold text-foreground tracking-wide">Driver Update History</h1>
+          {dataSource === "cloud" && (
+            <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+              <Database className="w-2.5 h-2.5" /> CLOUD
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <Clock className="w-3.5 h-3.5" />
@@ -86,34 +133,41 @@ export function DriverHistoryPage({ onBack }: DriverHistoryPageProps) {
 
       {/* Timeline */}
       <div className="flex-1 overflow-auto p-5 space-y-6 custom-scrollbar">
-        {Object.entries(grouped).map(([date, entries]) => (
-          <div key={date}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span className="text-[12px] font-bold text-foreground/60 uppercase tracking-wider">{formatDate(date)}</span>
-              <div className="flex-1 h-px bg-white/5" />
-            </div>
-            <div className="space-y-1.5 ml-3">
-              {entries.map((entry, i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/[0.03] transition-colors group" style={{ border: "1px solid hsl(220 10% 16%)" }}>
-                  <div className="shrink-0">
-                    <Shield className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] font-medium text-foreground/90 truncate">{entry.driver}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      <span className="text-red-400/70">{entry.from}</span>
-                      <span className="mx-1.5">→</span>
-                      <span className="text-green-400/70">{entry.to}</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/60 shrink-0">{entry.time}</span>
-                  <StatusBadge status={entry.status} />
-                </div>
-              ))}
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            <span className="ml-2 text-sm text-muted-foreground">Loading history...</span>
           </div>
-        ))}
+        ) : (
+          Object.entries(grouped).map(([date, entries]) => (
+            <div key={date}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <span className="text-[12px] font-bold text-foreground/60 uppercase tracking-wider">{formatDate(date)}</span>
+                <div className="flex-1 h-px bg-white/5" />
+              </div>
+              <div className="space-y-1.5 ml-3">
+                {entries.map((entry, i) => (
+                  <div key={i} className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/[0.03] transition-colors group" style={{ border: "1px solid hsl(220 10% 16%)" }}>
+                    <div className="shrink-0">
+                      <Shield className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] font-medium text-foreground/90 truncate">{entry.driver}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        <span className="text-red-400/70">{entry.from}</span>
+                        <span className="mx-1.5">→</span>
+                        <span className="text-green-400/70">{entry.to}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground/60 shrink-0">{entry.time}</span>
+                    <StatusBadge status={entry.status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
