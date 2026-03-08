@@ -197,6 +197,13 @@ function parseDriversFromMarkdown(markdown: string, vendor: string): any[] {
     "System devices": "HardDrive",
     "Bluetooth": "Wifi",
     "IDE ATA/ATAPI controllers": "HardDrive",
+    "Universal Serial Bus controllers": "Usb",
+    "Storage controllers": "HardDrive",
+    "Mice and other pointing devices": "Mouse",
+    "Human Interface Devices": "Mouse",
+    "Biometric devices": "Fingerprint",
+    "Imaging devices": "Camera",
+    "Print queues": "Printer",
   };
 
   for (const tmpl of templates) {
