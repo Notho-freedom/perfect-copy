@@ -7,9 +7,10 @@ import { ActionCenterPage } from "@/components/ActionCenterPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DriverHistoryPage } from "@/components/DriverHistoryPage";
 import { WhatsNewPage } from "@/components/WhatsNewPage";
+import { CheckForUpdatesPage } from "@/components/CheckForUpdatesPage";
 
 type Page = "scan" | "boost" | "tools" | "action-center";
-type SubPage = "settings" | "history" | "whats-new" | null;
+type SubPage = "settings" | "history" | "whats-new" | "check-updates" | null;
 
 const pageOrder: Page[] = ["scan", "boost", "tools", "action-center"];
 
@@ -30,7 +31,7 @@ const Index = () => {
     setCurrentPage(page);
   };
 
-  const handleMenuNavigate = (action: "settings" | "history" | "whats-new" | null) => {
+  const handleMenuNavigate = (action: "settings" | "history" | "whats-new" | "check-updates" | null) => {
     if (action) {
       setSubPage(action);
       setAnimKey((k) => k + 1);
@@ -46,6 +47,7 @@ const Index = () => {
     if (subPage === "settings") return <SettingsPage onBack={handleSubPageBack} />;
     if (subPage === "history") return <DriverHistoryPage onBack={handleSubPageBack} />;
     if (subPage === "whats-new") return <WhatsNewPage onBack={handleSubPageBack} />;
+    if (subPage === "check-updates") return <CheckForUpdatesPage onBack={handleSubPageBack} />;
 
     switch (currentPage) {
       case "scan": return <ScanPage />;
