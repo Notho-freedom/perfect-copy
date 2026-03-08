@@ -452,7 +452,6 @@ export function ScanPage() {
   const [progress, setProgress] = useState(0);
   const [currentDriver, setCurrentDriver] = useState("");
   const [showUpToDate, setShowUpToDate] = useState(false);
-  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set(outdatedDrivers.map(d => d.id)));
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showProModal, setShowProModal] = useState(false);
@@ -460,16 +459,25 @@ export function ScanPage() {
   const [selectedDetail, setSelectedDetail] = useState<Driver | null>(null);
   const [showProBanner, setShowProBanner] = useState(true);
 
+  // Dynamic driver data from Supabase
+  const [outdatedDrivers, setOutdatedDrivers] = useState<Driver[]>(fallbackOutdated);
+  const [upToDateDrivers, setUpToDateDrivers] = useState<string[]>(fallbackUpToDate);
+  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set(fallbackOutdated.map(d => d.id)));
+  const [dataSource, setDataSource] = useState<"local" | "cloud">("local");
+
   // Update simulation state
   const [updatingDrivers, setUpdatingDrivers] = useState<Map<string, number>>(new Map());
   const [updatedDrivers, setUpdatedDrivers] = useState<Set<string>>(new Set());
   const [currentUpdatingId, setCurrentUpdatingId] = useState<string | null>(null);
 
+  // Session ID for tracking
+  const sessionIdRef = useRef(crypto.randomUUID());
+
   const filteredOutdated = useMemo(() => {
     if (!searchQuery.trim()) return outdatedDrivers;
     const q = searchQuery.toLowerCase();
     return outdatedDrivers.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
-  }, [searchQuery]);
+  }, [searchQuery, outdatedDrivers]);
 
   const startScan = useCallback(() => {
     setScanState("scanning");
