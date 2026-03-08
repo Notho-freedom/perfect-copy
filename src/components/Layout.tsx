@@ -8,6 +8,7 @@ type Page = "scan" | "boost" | "tools" | "action-center";
 interface LayoutProps {
   currentPage: Page;
   onPageChange: (page: Page) => void;
+  onMenuNavigate?: (action: "settings" | "history" | "whats-new" | null) => void;
   children: React.ReactNode;
 }
 
@@ -74,7 +75,7 @@ const iconComponents: Record<Page, React.FC<{ active: boolean }>> = {
   "action-center": ActionCenterIcon,
 };
 
-export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
+export function Layout({ currentPage, onPageChange, onMenuNavigate, children }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(true);
@@ -171,7 +172,7 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
       )}
 
       {/* Hamburger menu */}
-      <HamburgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <HamburgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} onNavigate={onMenuNavigate} />
       
       {/* Chat overlay */}
       <ChatOverlay open={chatOpen} onClose={() => setChatOpen(false)} />

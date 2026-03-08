@@ -1,13 +1,15 @@
-import { ArrowLeft, Settings, History, RefreshCw, BookOpen, Headphones, Languages, Sparkles, Star, Palette } from "lucide-react";
+import { ArrowLeft, Settings, History, RefreshCw, BookOpen, Headphones, Languages, Sparkles, Star } from "lucide-react";
 
-const menuItems = [
-  { icon: <Settings className="w-4 h-4" />, label: "Settings...", color: "text-muted-foreground" },
-  { icon: <History className="w-4 h-4" />, label: "Driver Update History", color: "text-blue-400" },
+type MenuAction = "settings" | "history" | "whats-new" | null;
+
+const menuItems: { icon: React.ReactNode; label: string; color: string; action?: MenuAction }[] = [
+  { icon: <Settings className="w-4 h-4" />, label: "Settings...", color: "text-muted-foreground", action: "settings" },
+  { icon: <History className="w-4 h-4" />, label: "Driver Update History", color: "text-blue-400", action: "history" },
   { icon: <RefreshCw className="w-4 h-4" />, label: "Check for Updates", color: "text-green-400" },
   { icon: <BookOpen className="w-4 h-4" />, label: "User Manual (F1)", color: "text-blue-400" },
   { icon: <Headphones className="w-4 h-4" />, label: "Technical Support", color: "text-yellow-400" },
   { icon: <Languages className="w-4 h-4" />, label: "Help Us Translate", color: "text-orange-400" },
-  { icon: <Sparkles className="w-4 h-4" />, label: "What's New", color: "text-blue-400" },
+  { icon: <Sparkles className="w-4 h-4" />, label: "What's New", color: "text-blue-400", action: "whats-new" },
   { icon: <Star className="w-4 h-4" />, label: "About", color: "text-yellow-400" },
 ];
 
@@ -19,10 +21,18 @@ const skinColors = [
 interface HamburgerMenuProps {
   open: boolean;
   onClose: () => void;
+  onNavigate?: (action: MenuAction) => void;
 }
 
-export function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
+export function HamburgerMenu({ open, onClose, onNavigate }: HamburgerMenuProps) {
   if (!open) return null;
+
+  const handleClick = (action?: MenuAction) => {
+    if (action && onNavigate) {
+      onNavigate(action);
+      onClose();
+    }
+  };
 
   return (
     <>
@@ -39,7 +49,11 @@ export function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
         {/* Menu items */}
         <div className="flex-1 overflow-auto py-2">
           {menuItems.map(item => (
-            <button key={item.label} className="w-full flex items-center gap-3.5 px-5 py-3 text-sm text-foreground/80 hover:bg-white/5 hover:text-foreground transition-colors text-left">
+            <button
+              key={item.label}
+              onClick={() => handleClick(item.action)}
+              className="w-full flex items-center gap-3.5 px-5 py-3 text-sm text-foreground/80 hover:bg-white/5 hover:text-foreground transition-colors text-left"
+            >
               <span className={item.color}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
