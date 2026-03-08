@@ -110,18 +110,16 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar — centered vertically */}
         <div className="w-[100px] shrink-0 flex flex-col items-center gap-1" style={{ background: "hsl(220 18% 8%)" }}>
-          {/* Hamburger button — same style as sidebar items */}
+        <div className="w-[100px] shrink-0 flex flex-col items-center" style={{ background: "hsl(220 18% 8%)" }}>
+          {/* Hamburger — top */}
           <button
             onClick={() => setMenuOpen(true)}
-            className="relative w-full flex flex-col items-center gap-1.5 py-4 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200 hover-scale-sm"
+            className="w-full flex flex-col items-center py-4 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200 hover-scale-sm shrink-0"
           >
             <Menu className="w-7 h-7" />
-            <span className="text-[11px] font-medium">Menu</span>
           </button>
 
-          <div className="w-10 h-px bg-white/10 my-1" />
-
-          {/* Spacer to vertically center nav items */}
+          {/* Nav items — centered */}
           <div className="flex-1 flex flex-col items-center justify-center gap-1 w-full">
           {sidebarItems.map((item) => {
             const active = currentPage === item.id;
@@ -143,7 +141,6 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
             );
           })}
           </div>
-          <div className="flex-1" />
         </div>
 
         {/* Main content with page transition */}
