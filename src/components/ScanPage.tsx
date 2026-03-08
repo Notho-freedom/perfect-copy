@@ -518,6 +518,7 @@ export function ScanPage() {
   const [showUpToDate, setShowUpToDate] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [showProModal, setShowProModal] = useState(false);
   const [showActivateModal, setShowActivateModal] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<Driver | null>(null);
@@ -537,11 +538,42 @@ export function ScanPage() {
   // Session ID for tracking
   const sessionIdRef = useRef(crypto.randomUUID());
 
+  // Category map for grouping
+  const categoryGroups: Record<string, { label: string; icon: React.ReactNode; match: string[] }> = {
+    all: { label: "Tous", icon: <Monitor className="w-3 h-3" />, match: [] },
+    gpu: { label: "GPU", icon: <Monitor className="w-3 h-3" />, match: ["display adapters"] },
+    audio: { label: "Audio", icon: <Volume2 className="w-3 h-3" />, match: ["sound, video and game controllers"] },
+    network: { label: "Réseau", icon: <Wifi className="w-3 h-3" />, match: ["network adapters", "bluetooth"] },
+    storage: { label: "Stockage", icon: <HardDrive className="w-3 h-3" />, match: ["storage controllers", "ide ata/atapi controllers"] },
+    usb: { label: "USB", icon: <Usb className="w-3 h-3" />, match: ["universal serial bus controllers"] },
+    input: { label: "Périph.", icon: <Mouse className="w-3 h-3" />, match: ["human interface devices", "mice and other pointing devices", "biometric devices", "imaging devices"] },
+    system: { label: "Système", icon: <HardDrive className="w-3 h-3" />, match: ["system devices", "print queues"] },
+  };
+
   const filteredOutdated = useMemo(() => {
-    if (!searchQuery.trim()) return outdatedDrivers;
-    const q = searchQuery.toLowerCase();
-    return outdatedDrivers.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
-  }, [searchQuery, outdatedDrivers]);
+    let drivers = outdatedDrivers;
+    if (categoryFilter !== "all") {
+      const group = categoryGroups[categoryFilter];
+      if (group) {
+        drivers = drivers.filter(d => group.match.some(m => d.category.toLowerCase().includes(m)));
+      }
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      drivers = drivers.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
+    }
+    return drivers;
+  }, [searchQuery, outdatedDrivers, categoryFilter]);
+
+  // Count per category
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: outdatedDrivers.length };
+    for (const [key, group] of Object.entries(categoryGroups)) {
+      if (key === "all") continue;
+      counts[key] = outdatedDrivers.filter(d => group.match.some(m => d.category.toLowerCase().includes(m))).length;
+    }
+    return counts;
+  }, [outdatedDrivers]);
 
   const startScan = useCallback(() => {
     setScanState("scanning");
@@ -820,7 +852,33 @@ export function ScanPage() {
           </div>
         </div>
 
-        {/* Driver list */}
+        {/* Category filter bar */}
+        <div className="flex items-center gap-1.5 px-5 mb-2 overflow-x-auto custom-scrollbar">
+          {Object.entries(categoryGroups).map(([key, group]) => {
+            const count = categoryCounts[key] || 0;
+            if (key !== "all" && count === 0) return null;
+            const isActive = categoryFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setCategoryFilter(key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all duration-200 shrink-0 ${
+                  isActive
+                    ? "bg-primary/20 text-primary border border-primary/40"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent"
+                }`}
+              >
+                {group.icon}
+                <span>{group.label}</span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-primary/30 text-primary" : "bg-white/10 text-muted-foreground"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+
         <div className="flex-1 overflow-auto px-5 pb-3 custom-scrollbar">
           <div className="space-y-0.5">
             {filteredOutdated.map((driver, idx) => {
