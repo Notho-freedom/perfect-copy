@@ -14,7 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      driver_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          download_size_mb: number | null
+          hardware_keywords: string[]
+          icon: string
+          id: string
+          installed_date: string
+          installed_version: string
+          is_pro: boolean
+          latest_date: string
+          latest_version: string
+          name: string
+          os_compatibility: string[]
+          vendor: string
+          whql_certified: boolean
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          download_size_mb?: number | null
+          hardware_keywords?: string[]
+          icon?: string
+          id?: string
+          installed_date: string
+          installed_version: string
+          is_pro?: boolean
+          latest_date: string
+          latest_version: string
+          name: string
+          os_compatibility?: string[]
+          vendor: string
+          whql_certified?: boolean
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          download_size_mb?: number | null
+          hardware_keywords?: string[]
+          icon?: string
+          id?: string
+          installed_date?: string
+          installed_version?: string
+          is_pro?: boolean
+          latest_date?: string
+          latest_version?: string
+          name?: string
+          os_compatibility?: string[]
+          vendor?: string
+          whql_certified?: boolean
+        }
+        Relationships: []
+      }
+      driver_updates: {
+        Row: {
+          category: string
+          driver_name: string
+          from_version: string
+          id: string
+          session_id: string
+          status: string
+          to_version: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          driver_name: string
+          from_version: string
+          id?: string
+          session_id: string
+          status?: string
+          to_version: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          driver_name?: string
+          from_version?: string
+          id?: string
+          session_id?: string
+          status?: string
+          to_version?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scan_history: {
+        Row: {
+          cpu_detected: string | null
+          drivers_found: number
+          gpu_detected: string | null
+          id: string
+          os_detected: string | null
+          outdated_count: number
+          ram_gb: number | null
+          scan_date: string
+          scan_duration_ms: number | null
+          session_id: string
+          up_to_date_count: number
+        }
+        Insert: {
+          cpu_detected?: string | null
+          drivers_found?: number
+          gpu_detected?: string | null
+          id?: string
+          os_detected?: string | null
+          outdated_count?: number
+          ram_gb?: number | null
+          scan_date?: string
+          scan_duration_ms?: number | null
+          session_id: string
+          up_to_date_count?: number
+        }
+        Update: {
+          cpu_detected?: string | null
+          drivers_found?: number
+          gpu_detected?: string | null
+          id?: string
+          os_detected?: string | null
+          outdated_count?: number
+          ram_gb?: number | null
+          scan_date?: string
+          scan_duration_ms?: number | null
+          session_id?: string
+          up_to_date_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
