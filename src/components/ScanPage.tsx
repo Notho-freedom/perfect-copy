@@ -814,6 +814,38 @@ export function ScanPage() {
           </div>
         </div>
 
+        {/* Global update progress bar */}
+        {scanState === "updating" && (() => {
+          const freeSelected = outdatedDrivers.filter(d => !d.isPro && selectedDrivers.has(d.id));
+          const totalDrivers = freeSelected.length;
+          if (totalDrivers === 0) return null;
+          const completedCount = freeSelected.filter(d => updatedDrivers.has(d.id)).length;
+          const currentProgress = currentUpdatingId ? (updatingDrivers.get(currentUpdatingId) || 0) : 0;
+          const globalProgress = ((completedCount + currentProgress / 100) / totalDrivers) * 100;
+          const currentName = freeSelected.find(d => d.id === currentUpdatingId)?.name || "";
+          return (
+            <div className="mx-5 mt-3 rounded-lg p-3 animate-fade-in" style={{ background: "hsl(220 14% 13%)", border: "1px solid hsl(220 10% 20%)" }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[11px] font-bold text-foreground">
+                    Mise à jour en cours... {completedCount}/{totalDrivers}
+                  </span>
+                </div>
+                <span className="text-[11px] font-bold text-primary">{Math.round(globalProgress)}%</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "hsl(220 14% 20%)" }}>
+                <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-150" style={{ width: `${globalProgress}%` }} />
+              </div>
+              {currentName && (
+                <div className="text-[10px] text-muted-foreground mt-1.5 truncate">
+                  ▸ {currentName}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* PRO upsell banner */}
         {showProBanner && (
           <div className="mx-5 mt-3 rounded-lg px-4 py-2.5 flex items-center justify-between animate-fade-in" style={{ background: "linear-gradient(90deg, hsl(30 60% 15%), hsl(0 40% 15%))", border: "1px solid hsl(30 40% 25%)" }}>
