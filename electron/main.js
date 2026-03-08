@@ -1,6 +1,7 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { setupWindowControls } = require("./windowControls");
+const { getSystemInfo } = require("./systemInfo");
 
 let mainWindow;
 
@@ -22,7 +23,6 @@ function createWindow() {
     backgroundColor: "#0f1117",
   });
 
-  // In dev, load from Vite dev server; in prod, load built files
   const isDev = process.env.NODE_ENV === "development";
   if (isDev) {
     mainWindow.loadURL("http://localhost:8080");
@@ -38,6 +38,17 @@ function createWindow() {
 
 app.whenReady().then(() => {
   setupWindowControls();
+
+  // IPC handler for system info
+  ipcMain.handle("get-system-info", async () => {
+    try {
+      return getSystemInfo();
+    } catch (e) {
+      console.error("Failed to get system info:", e);
+      return null;
+    }
+  });
+
   createWindow();
 });
 
