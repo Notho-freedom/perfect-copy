@@ -120,6 +120,42 @@
         inset 0 0 25px 8px hsl(0 72% 30% / 0.6);
     }
   }
+
+  /* Orbiting particles */
+  @keyframes orbit1 {
+    0% { transform: rotate(0deg) translateX(110px) rotate(0deg); opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { transform: rotate(360deg) translateX(110px) rotate(-360deg); opacity: 0.8; }
+  }
+  @keyframes orbit2 {
+    0% { transform: rotate(120deg) translateX(115px) rotate(-120deg); opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { transform: rotate(480deg) translateX(115px) rotate(-480deg); opacity: 0.6; }
+  }
+  @keyframes orbit3 {
+    0% { transform: rotate(240deg) translateX(105px) rotate(-240deg); opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { transform: rotate(600deg) translateX(105px) rotate(-600deg); opacity: 0.7; }
+  }
+  .scan-particle-1 {
+    animation: orbit1 4s linear infinite;
+  }
+  .scan-particle-2 {
+    animation: orbit2 5.5s linear infinite;
+  }
+  .scan-particle-3 {
+    animation: orbit3 3.5s linear infinite;
+  }
+
+  /* Outer glow ring rotation */
+  @keyframes glowRingSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .scan-glow-ring {
+    animation: glowRingSpin 6s linear infinite;
+  }
+
   @keyframes spin-slow {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
