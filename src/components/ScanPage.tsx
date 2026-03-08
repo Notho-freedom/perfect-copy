@@ -538,11 +538,42 @@ export function ScanPage() {
   // Session ID for tracking
   const sessionIdRef = useRef(crypto.randomUUID());
 
+  // Category map for grouping
+  const categoryGroups: Record<string, { label: string; icon: React.ReactNode; match: string[] }> = {
+    all: { label: "Tous", icon: <Monitor className="w-3 h-3" />, match: [] },
+    gpu: { label: "GPU", icon: <Monitor className="w-3 h-3" />, match: ["display adapters"] },
+    audio: { label: "Audio", icon: <Volume2 className="w-3 h-3" />, match: ["sound, video and game controllers"] },
+    network: { label: "Réseau", icon: <Wifi className="w-3 h-3" />, match: ["network adapters", "bluetooth"] },
+    storage: { label: "Stockage", icon: <HardDrive className="w-3 h-3" />, match: ["storage controllers", "ide ata/atapi controllers"] },
+    usb: { label: "USB", icon: <Usb className="w-3 h-3" />, match: ["universal serial bus controllers"] },
+    input: { label: "Périph.", icon: <Mouse className="w-3 h-3" />, match: ["human interface devices", "mice and other pointing devices", "biometric devices", "imaging devices"] },
+    system: { label: "Système", icon: <HardDrive className="w-3 h-3" />, match: ["system devices", "print queues"] },
+  };
+
   const filteredOutdated = useMemo(() => {
-    if (!searchQuery.trim()) return outdatedDrivers;
-    const q = searchQuery.toLowerCase();
-    return outdatedDrivers.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
-  }, [searchQuery, outdatedDrivers]);
+    let drivers = outdatedDrivers;
+    if (categoryFilter !== "all") {
+      const group = categoryGroups[categoryFilter];
+      if (group) {
+        drivers = drivers.filter(d => group.match.some(m => d.category.toLowerCase().includes(m)));
+      }
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      drivers = drivers.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
+    }
+    return drivers;
+  }, [searchQuery, outdatedDrivers, categoryFilter]);
+
+  // Count per category
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: outdatedDrivers.length };
+    for (const [key, group] of Object.entries(categoryGroups)) {
+      if (key === "all") continue;
+      counts[key] = outdatedDrivers.filter(d => group.match.some(m => d.category.toLowerCase().includes(m))).length;
+    }
+    return counts;
+  }, [outdatedDrivers]);
 
   const startScan = useCallback(() => {
     setScanState("scanning");
