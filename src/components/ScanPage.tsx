@@ -151,7 +151,7 @@ function PCInfoPanel() {
       ...(sysInfo?.os.hostname ? [{ icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Nom d'hôte", value: sysInfo.os.hostname }] : []),
       ...(sysInfo?.os.uptime ? [{ icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Uptime", value: `${Math.floor(sysInfo.os.uptime / 3600)}h ${Math.floor((sysInfo.os.uptime % 3600) / 60)}m` }] : []),
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Navigateur/Runtime", value: browserLabel },
-      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Source détection", value: isElectron ? "Electron (natif)" : "Browser (estimé)" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Source détection", value: isFullElectron ? "Electron (natif)" : isElectron ? "Electron (partiel)" : "Browser (estimé)" },
     ],
     "Processeur et Carte Mère": [
       { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: cpuLabel },
