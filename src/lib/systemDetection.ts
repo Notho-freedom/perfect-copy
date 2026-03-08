@@ -274,6 +274,88 @@ function detectSystemInfoBrowser(): SystemInfo {
   };
 }
 
+/** Extract detected vendors from hardware for pre-filtering drivers */
+export function getDetectedVendors(info: SystemInfo): string[] {
+  const vendors = new Set<string>();
+
+  // Always include Microsoft for generic system drivers
+  vendors.add("microsoft");
+
+  // GPU vendor
+  const gpu = (info.gpu.renderer + " " + info.gpu.vendor).toLowerCase();
+  if (gpu.includes("nvidia") || gpu.includes("geforce")) vendors.add("nvidia");
+  if (gpu.includes("amd") || gpu.includes("radeon")) vendors.add("amd");
+  if (gpu.includes("intel")) vendors.add("intel");
+  if (gpu.includes("apple")) vendors.add("apple");
+
+  // Additional GPUs
+  if (info.gpu.additionalGPUs) {
+    for (const g of info.gpu.additionalGPUs) {
+      const n = (g.name + " " + g.vendor).toLowerCase();
+      if (n.includes("nvidia") || n.includes("geforce")) vendors.add("nvidia");
+      if (n.includes("amd") || n.includes("radeon")) vendors.add("amd");
+      if (n.includes("intel")) vendors.add("intel");
+    }
+  }
+
+  // CPU vendor
+  const cpu = info.cpu.name.toLowerCase();
+  if (cpu.includes("intel")) vendors.add("intel");
+  if (cpu.includes("amd") || cpu.includes("ryzen")) vendors.add("amd");
+  if (cpu.includes("apple")) vendors.add("apple");
+
+  // Motherboard vendor
+  if (info.motherboard) {
+    const mb = info.motherboard.manufacturer.toLowerCase();
+    if (mb.includes("asus")) vendors.add("asus");
+    if (mb.includes("msi")) vendors.add("msi");
+    if (mb.includes("gigabyte")) vendors.add("gigabyte");
+    if (mb.includes("asrock")) vendors.add("asrock");
+    if (mb.includes("dell")) vendors.add("dell");
+    if (mb.includes("hp") || mb.includes("hewlett")) vendors.add("hp");
+    if (mb.includes("lenovo")) vendors.add("lenovo");
+  }
+
+  // Audio devices
+  if (info.audio) {
+    for (const dev of info.audio) {
+      const n = dev.name.toLowerCase();
+      if (n.includes("realtek")) vendors.add("realtek");
+      if (n.includes("creative")) vendors.add("creative");
+      if (n.includes("nvidia")) vendors.add("nvidia");
+      if (n.includes("amd")) vendors.add("amd");
+    }
+  }
+
+  // Network adapters
+  if (info.network?.adapters) {
+    for (const a of info.network.adapters) {
+      const n = (a.name + " " + (a.manufacturer || "")).toLowerCase();
+      if (n.includes("realtek")) vendors.add("realtek");
+      if (n.includes("intel")) vendors.add("intel");
+      if (n.includes("qualcomm") || n.includes("atheros")) vendors.add("qualcomm");
+      if (n.includes("broadcom")) vendors.add("broadcom");
+      if (n.includes("mediatek")) vendors.add("mediatek");
+      if (n.includes("tp-link")) vendors.add("tp-link");
+    }
+  }
+
+  // Storage devices
+  if (info.disks) {
+    for (const d of info.disks) {
+      const m = d.model.toLowerCase();
+      if (m.includes("samsung")) vendors.add("samsung");
+      if (m.includes("western digital") || m.includes("wd")) vendors.add("western digital");
+      if (m.includes("seagate")) vendors.add("seagate");
+      if (m.includes("crucial") || m.includes("micron")) vendors.add("crucial");
+      if (m.includes("kingston")) vendors.add("kingston");
+      if (m.includes("sandisk")) vendors.add("sandisk");
+    }
+  }
+
+  return Array.from(vendors);
+}
+
 /** Extract the GPU vendor string for exclusion filtering */
 export function getGPUVendorHint(info: SystemInfo): string {
   const renderer = info.gpu.renderer.toLowerCase();

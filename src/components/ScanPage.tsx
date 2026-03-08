@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { outdatedDrivers as fallbackOutdated, upToDateDrivers as fallbackUpToDate, scanDriverNames, Driver } from "@/data/drivers";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp, Monitor, Volume2, Wifi, HardDrive, Mouse, Network, Usb, Info, Search, ChevronRight, X, Check, Crown, Shield, Zap, Star, ArrowLeft, RotateCcw, Trash2, EyeOff, Cpu, MemoryStick } from "lucide-react";
-import { detectSystemInfo, detectSystemInfoAsync, getHardwareKeywords, getGPUVendorHint, type SystemInfo } from "@/lib/systemDetection";
+import { detectSystemInfo, detectSystemInfoAsync, getHardwareKeywords, getGPUVendorHint, getDetectedVendors, type SystemInfo } from "@/lib/systemDetection";
 import { supabase } from "@/integrations/supabase/client";
 
 type ScanState = "idle" | "scanning" | "results-list" | "updating" | "update-complete";
@@ -582,14 +582,16 @@ export function ScanPage() {
     setUpdatedDrivers(new Set());
     setCurrentUpdatingId(null);
 
-    // Fetch real driver data from Supabase with contextual keywords
-    const sysInfo = detectSystemInfo();
-    const keywords = getHardwareKeywords(sysInfo);
-    const gpuVendor = getGPUVendorHint(sysInfo);
-    
-    supabase.functions.invoke('get-driver-info', {
-      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase(), gpu_vendor: gpuVendor },
-    }).then(({ data, error }) => {
+    // Fetch real driver data from Supabase with vendor-targeted filtering
+    detectSystemInfoAsync().then(asyncSysInfo => {
+      const keywords = getHardwareKeywords(asyncSysInfo);
+      const gpuVendor = getGPUVendorHint(asyncSysInfo);
+      const detectedVendors = getDetectedVendors(asyncSysInfo);
+      
+      return supabase.functions.invoke('get-driver-info', {
+        body: { hardware_keywords: keywords, os: asyncSysInfo.os.name.toLowerCase(), gpu_vendor: gpuVendor, detected_vendors: detectedVendors },
+      }).then(({ data, error }) => {
+        const sysInfo = asyncSysInfo;
       if (!error && data?.outdated) {
         const drivers: Driver[] = data.outdated.map((d: any) => ({
           id: d.id,
@@ -620,6 +622,7 @@ export function ScanPage() {
           up_to_date_count: data.upToDate?.length || 0,
         }).then(() => {});
       }
+      });
     }).catch(() => {
       // Fallback to local data
       setDataSource("local");

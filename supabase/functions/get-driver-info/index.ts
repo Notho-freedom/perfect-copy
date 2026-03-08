@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { hardware_keywords, os, gpu_vendor } = await req.json();
+    const { hardware_keywords, os, gpu_vendor, detected_vendors } = await req.json();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -35,15 +35,21 @@ Deno.serve(async (req) => {
 
     const normalizedOS = normalizeOS(os || '');
 
-    // Query with OS compatibility filter
+    // Query with OS compatibility + vendor pre-filtering
     let query = supabase
       .from('driver_catalog')
       .select('*')
       .order('category');
 
-    // Filter by OS compatibility using the array contains operator
+    // Filter by OS compatibility
     if (normalizedOS) {
       query = query.contains('os_compatibility', [normalizedOS]);
+    }
+
+    // Pre-filter by detected vendors — only fetch drivers from relevant vendors
+    if (detected_vendors && Array.isArray(detected_vendors) && detected_vendors.length > 0) {
+      const vendorsLower = detected_vendors.map((v: string) => v.toLowerCase());
+      query = query.in('vendor', vendorsLower);
     }
 
     const { data: allDrivers, error } = await query;
@@ -137,13 +143,12 @@ Deno.serve(async (req) => {
       .filter(d => d.score > 0)
       .sort((a, b) => b.score - a.score);
 
-    // If too few matched, add some generic compatible ones (but NOT excluded vendors)
-    if (relevantDrivers.length < 8 && keywords.length > 0) {
-      const genericDrivers = scoredDrivers
+    // When vendor pre-filtering is active, include all vendor-matched drivers even with score 0
+    if (detected_vendors && detected_vendors.length > 0 && relevantDrivers.length < 8) {
+      const vendorMatched = scoredDrivers
         .filter(d => d.score === 0 && !relevantDrivers.find(r => r.id === d.id))
-        .slice(0, 8 - relevantDrivers.length)
         .map(d => ({ ...d, matchType: 'generic' as const }));
-      relevantDrivers = [...relevantDrivers, ...genericDrivers];
+      relevantDrivers = [...relevantDrivers, ...vendorMatched];
     }
 
     // If no keywords provided, use all OS-compatible drivers
