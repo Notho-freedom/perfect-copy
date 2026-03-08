@@ -111,16 +111,22 @@ function PCInfoPanel() {
     { id: "Processeur et Carte Mère", icon: <Cpu className="w-3.5 h-3.5 text-green-400" /> },
     { id: "Dispositif de Mémoire", icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" /> },
     { id: "Affichage", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
+    { id: "Stockage", icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" /> },
     { id: "Réseau", icon: <Wifi className="w-3.5 h-3.5 text-green-400" /> },
+    { id: "Audio", icon: <Volume2 className="w-3.5 h-3.5 text-green-400" /> },
   ];
 
+  const isElectron = sysInfo?.source === "electron";
   const osLabel = sysInfo ? `${sysInfo.os.name} ${sysInfo.os.version}` : "Detecting...";
   const cpuLabel = sysInfo ? sysInfo.cpu.name : "Detecting...";
   const gpuLabel = sysInfo ? sysInfo.gpu.renderer : "Detecting...";
   const ramLabel = sysInfo?.ram.totalGB ? `${sysInfo.ram.totalGB} GB` : "N/A";
   const displayLabel = sysInfo ? `${sysInfo.display.width} x ${sysInfo.display.height} (${sysInfo.display.pixelRatio}x)` : "Detecting...";
-  const networkLabel = sysInfo?.network.type ? `${sysInfo.network.type}${sysInfo.network.downlink ? ` (${sysInfo.network.downlink} Mbps)` : ""}` : "N/A";
+  const networkLabel = sysInfo?.network.type ? `${sysInfo.network.type}${sysInfo.network.downlink ? ` (${sysInfo.network.downlink} Mbps)` : ""}` : (sysInfo?.network.adapters?.length ? `${sysInfo.network.adapters.length} adapter(s)` : "N/A");
   const browserLabel = sysInfo ? `${sysInfo.browser.name} (${sysInfo.browser.language})` : "Detecting...";
+  const mbLabel = sysInfo?.motherboard ? `${sysInfo.motherboard.manufacturer} ${sysInfo.motherboard.product}` : "N/A";
+  const vramLabel = sysInfo?.gpu.vramMB ? `${sysInfo.gpu.vramMB} MB` : "N/A";
+  const gpuDriverLabel = sysInfo?.gpu.driverVersion || "N/A";
 
   const systemInfo: Record<string, { icon: React.ReactNode; label: string; value: string }[]> = {
     Global: [
@@ -128,6 +134,7 @@ function PCInfoPanel() {
       { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: cpuLabel },
       { icon: <Monitor className="w-3.5 h-3.5 text-green-400" />, label: "Carte graphique", value: gpuLabel },
       { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "Mémoire", value: ramLabel },
+      ...(isElectron ? [{ icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" />, label: "Carte mère", value: mbLabel }] : []),
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Moniteur", value: displayLabel },
       { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Réseau", value: networkLabel },
     ],
@@ -135,25 +142,63 @@ function PCInfoPanel() {
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "OS", value: osLabel },
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Architecture", value: sysInfo?.os.architecture || "N/A" },
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Platform", value: sysInfo?.os.platform || "N/A" },
-      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Navigateur", value: browserLabel },
-      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Langue", value: sysInfo?.browser.language || "N/A" },
+      ...(sysInfo?.os.hostname ? [{ icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Nom d'hôte", value: sysInfo.os.hostname }] : []),
+      ...(sysInfo?.os.uptime ? [{ icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Uptime", value: `${Math.floor(sysInfo.os.uptime / 3600)}h ${Math.floor((sysInfo.os.uptime % 3600) / 60)}m` }] : []),
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Navigateur/Runtime", value: browserLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Source détection", value: isElectron ? "Electron (natif)" : "Browser (estimé)" },
     ],
     "Processeur et Carte Mère": [
       { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: cpuLabel },
       { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Cœurs logiques", value: sysInfo ? `${sysInfo.cpu.cores}` : "N/A" },
+      ...(sysInfo?.cpu.physicalCores ? [{ icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Cœurs physiques", value: `${sysInfo.cpu.physicalCores}` }] : []),
+      ...(sysInfo?.cpu.speed ? [{ icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Fréquence", value: `${sysInfo.cpu.speed} MHz` }] : []),
+      { icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" />, label: "Carte mère", value: mbLabel },
     ],
     "Dispositif de Mémoire": [
-      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "RAM", value: ramLabel },
+      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "RAM totale", value: ramLabel },
+      ...(sysInfo?.ram.freeGB != null ? [{ icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "RAM libre", value: `${sysInfo.ram.freeGB} GB` }] : []),
+      ...(sysInfo?.ram.usedGB != null ? [{ icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "RAM utilisée", value: `${sysInfo.ram.usedGB} GB` }] : []),
+      ...(sysInfo?.ram.modules?.map((m, i) => ({
+        icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />,
+        label: `Module ${i + 1}`,
+        value: `${m.capacityGB} GB ${m.manufacturer}${m.speedMHz ? ` @ ${m.speedMHz} MHz` : ""}`,
+      })) || []),
     ],
     "Affichage": [
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "GPU", value: gpuLabel },
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Vendor", value: sysInfo?.gpu.vendor || "N/A" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "VRAM", value: vramLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Version pilote", value: gpuDriverLabel },
+      ...(sysInfo?.gpu.additionalGPUs?.map((g, i) => ({
+        icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />,
+        label: `GPU ${i + 2}`,
+        value: `${g.name} (${g.vramMB} MB)`,
+      })) || []),
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Résolution", value: displayLabel },
       { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Profondeur couleur", value: sysInfo ? `${sysInfo.display.colorDepth} bits` : "N/A" },
     ],
+    "Stockage": [
+      ...(sysInfo?.disks?.map((d, i) => ({
+        icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" />,
+        label: `Disque ${i + 1}`,
+        value: `${d.model} (${d.sizeGB} GB, ${d.interface || d.mediaType || "N/A"})`,
+      })) || [{ icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" />, label: "Stockage", value: isElectron ? "Aucun disque détecté" : "Nécessite Electron" }]),
+    ],
     "Réseau": [
-      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Type", value: sysInfo?.network.type || "N/A" },
+      ...(sysInfo?.network.adapters?.map((a, i) => ({
+        icon: <Wifi className="w-3.5 h-3.5 text-green-400" />,
+        label: a.manufacturer || `Adaptateur ${i + 1}`,
+        value: a.name,
+      })) || []),
+      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Type connexion", value: sysInfo?.network.type || "N/A" },
       { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Débit", value: sysInfo?.network.downlink ? `${sysInfo.network.downlink} Mbps` : "N/A" },
+    ],
+    "Audio": [
+      ...(sysInfo?.audio?.map((a, i) => ({
+        icon: <Volume2 className="w-3.5 h-3.5 text-green-400" />,
+        label: a.manufacturer || `Périphérique ${i + 1}`,
+        value: a.name,
+      })) || [{ icon: <Volume2 className="w-3.5 h-3.5 text-green-400" />, label: "Audio", value: isElectron ? "Aucun périphérique" : "Nécessite Electron" }]),
     ],
   };
 
