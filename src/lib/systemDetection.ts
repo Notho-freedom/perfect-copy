@@ -164,21 +164,9 @@ function detectOS(): SystemInfo["os"] {
 
 function detectCPU(): SystemInfo["cpu"] {
   const cores = navigator.hardwareConcurrency || 0;
-  const ua = navigator.userAgent;
-  let name = `${cores}-Core Processor`;
-
-  if (ua.includes("Win")) {
-    if (cores >= 16) name = `Intel Core i9 / AMD Ryzen 9 (${cores} cores)`;
-    else if (cores >= 12) name = `Intel Core i7 / AMD Ryzen 7 (${cores} cores)`;
-    else if (cores >= 8) name = `Intel Core i5 / AMD Ryzen 5 (${cores} cores)`;
-    else if (cores >= 4) name = `Intel Core i3 / AMD Ryzen 3 (${cores} cores)`;
-    else name = `Dual-Core Processor (${cores} cores)`;
-  } else if (ua.includes("Mac")) {
-    if (cores >= 10) name = `Apple M1 Pro/Max (${cores} cores)`;
-    else if (cores >= 8) name = `Apple M1/M2 (${cores} cores)`;
-    else name = `Apple Processor (${cores} cores)`;
-  }
-
+  const name = cores > 0
+    ? `Processeur ${cores} cœurs (détection limitée)`
+    : "Processeur inconnu (détection limitée)";
   return { cores, name };
 }
 

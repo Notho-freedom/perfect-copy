@@ -117,10 +117,13 @@ function PCInfoPanel() {
   ];
 
   const isElectron = sysInfo?.source === "electron";
+  const reliabilityBadge = isElectron
+    ? <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold ml-1">Natif</span>
+    : <span className="text-[8px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-bold ml-1">Estimé</span>;
   const osLabel = sysInfo ? `${sysInfo.os.name} ${sysInfo.os.version}` : "Detecting...";
   const cpuLabel = sysInfo ? sysInfo.cpu.name : "Detecting...";
   const gpuLabel = sysInfo ? sysInfo.gpu.renderer : "Detecting...";
-  const ramLabel = sysInfo?.ram.totalGB ? `${sysInfo.ram.totalGB} GB` : "N/A";
+  const ramLabel = sysInfo?.ram.totalGB ? `${sysInfo.ram.totalGB} GB${!isElectron ? " (approx.)" : ""}` : "N/A";
   const displayLabel = sysInfo ? `${sysInfo.display.width} x ${sysInfo.display.height} (${sysInfo.display.pixelRatio}x)` : "Detecting...";
   const networkLabel = sysInfo?.network.type ? `${sysInfo.network.type}${sysInfo.network.downlink ? ` (${sysInfo.network.downlink} Mbps)` : ""}` : (sysInfo?.network.adapters?.length ? `${sysInfo.network.adapters.length} adapter(s)` : "N/A");
   const browserLabel = sysInfo ? `${sysInfo.browser.name} (${sysInfo.browser.language})` : "Detecting...";
