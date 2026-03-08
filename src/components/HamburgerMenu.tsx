@@ -1,11 +1,11 @@
 import { ArrowLeft, Settings, History, RefreshCw, BookOpen, Headphones, Languages, Sparkles, Star } from "lucide-react";
 
-type MenuAction = "settings" | "history" | "whats-new" | null;
+type MenuAction = "settings" | "history" | "whats-new" | "check-updates" | null;
 
 const menuItems: { icon: React.ReactNode; label: string; color: string; action?: MenuAction }[] = [
   { icon: <Settings className="w-4 h-4" />, label: "Settings...", color: "text-muted-foreground", action: "settings" },
   { icon: <History className="w-4 h-4" />, label: "Driver Update History", color: "text-blue-400", action: "history" },
-  { icon: <RefreshCw className="w-4 h-4" />, label: "Check for Updates", color: "text-green-400" },
+  { icon: <RefreshCw className="w-4 h-4" />, label: "Check for Updates", color: "text-green-400", action: "check-updates" },
   { icon: <BookOpen className="w-4 h-4" />, label: "User Manual (F1)", color: "text-blue-400" },
   { icon: <Headphones className="w-4 h-4" />, label: "Technical Support", color: "text-yellow-400" },
   { icon: <Languages className="w-4 h-4" />, label: "Help Us Translate", color: "text-orange-400" },

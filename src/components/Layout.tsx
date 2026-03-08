@@ -8,7 +8,7 @@ type Page = "scan" | "boost" | "tools" | "action-center";
 interface LayoutProps {
   currentPage: Page;
   onPageChange: (page: Page) => void;
-  onMenuNavigate?: (action: "settings" | "history" | "whats-new" | null) => void;
+  onMenuNavigate?: (action: "settings" | "history" | "whats-new" | "check-updates" | null) => void;
   children: React.ReactNode;
 }
 
