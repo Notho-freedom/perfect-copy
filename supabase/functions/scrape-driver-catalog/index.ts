@@ -276,8 +276,8 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const sb = createClient(supabaseUrl, supabaseKey);
 
-    const { vendors } = await req.json().catch(() => ({ vendors: ['nvidia', 'intel', 'realtek'] }));
-    const targetVendors: string[] = vendors || ['nvidia', 'intel', 'realtek'];
+    const { vendors } = await req.json().catch(() => ({ vendors: ['nvidia', 'amd', 'intel', 'realtek', 'qualcomm', 'broadcom', 'mediatek', 'synaptics', 'logitech', 'corsair', 'samsung', 'microsoft', 'creative', 'asustek', 'msi'] }));
+    const targetVendors: string[] = vendors || ['nvidia', 'amd', 'intel', 'realtek', 'qualcomm', 'broadcom', 'mediatek', 'synaptics', 'logitech', 'corsair', 'samsung', 'microsoft', 'creative', 'asustek', 'msi'];
 
     const allDrivers: any[] = [];
     const errors: string[] = [];
