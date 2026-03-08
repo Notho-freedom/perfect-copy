@@ -83,11 +83,7 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
     <div className="flex flex-col h-screen max-h-screen overflow-hidden select-none" style={{ background: "hsl(220 18% 7%)" }}>
       {/* Title bar */}
       <div className="flex items-center justify-between h-9 px-3 shrink-0" style={{ background: "hsl(220 18% 8%)", WebkitAppRegion: "drag" } as React.CSSProperties}>
-        <div className="flex items-center">
-          <button onClick={() => setMenuOpen(true)} className="p-1.5 rounded hover:bg-white/10 transition-colors mr-4">
-            <Menu className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
+        <div className="w-[100px] shrink-0" />
         <div className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
           <span className="text-[13px] font-medium text-muted-foreground tracking-wide">Driver Booster 13.1</span>
           <span className="text-[9px] border border-primary/60 text-primary px-1.5 py-0.5 rounded font-bold leading-none">FREE</span>
@@ -113,7 +109,20 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
 
       <div className="flex flex-1 min-h-0">
         {/* Sidebar — centered vertically */}
-        <div className="w-[100px] shrink-0 flex flex-col items-center justify-center gap-1" style={{ background: "hsl(220 18% 8%)" }}>
+        <div className="w-[100px] shrink-0 flex flex-col items-center gap-1" style={{ background: "hsl(220 18% 8%)" }}>
+          {/* Hamburger button — same style as sidebar items */}
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="relative w-full flex flex-col items-center gap-1.5 py-4 text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200 hover-scale-sm"
+          >
+            <Menu className="w-7 h-7" />
+            <span className="text-[11px] font-medium">Menu</span>
+          </button>
+
+          <div className="w-10 h-px bg-white/10 my-1" />
+
+          {/* Spacer to vertically center nav items */}
+          <div className="flex-1 flex flex-col items-center justify-center gap-1 w-full">
           {sidebarItems.map((item) => {
             const active = currentPage === item.id;
             const Icon = iconComponents[item.id];
@@ -133,6 +142,8 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
               </button>
             );
           })}
+          </div>
+          <div className="flex-1" />
         </div>
 
         {/* Main content with page transition */}
