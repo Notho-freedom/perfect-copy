@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { outdatedDrivers, upToDateDrivers, scanDriverNames, Driver } from "@/data/drivers";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { outdatedDrivers as fallbackOutdated, upToDateDrivers as fallbackUpToDate, scanDriverNames, Driver } from "@/data/drivers";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp, Monitor, Volume2, Wifi, HardDrive, Mouse, Network, Usb, Info, Search, ChevronRight, X, Check, Crown, Shield, Zap, Star, ArrowLeft, RotateCcw, Trash2, EyeOff, Cpu, MemoryStick } from "lucide-react";
+import { detectSystemInfo, getHardwareKeywords, type SystemInfo } from "@/lib/systemDetection";
+import { supabase } from "@/integrations/supabase/client";
 
 type ScanState = "idle" | "scanning" | "results-list" | "updating" | "update-complete";
 
@@ -92,10 +94,15 @@ function ScanButton({ label, onClick, glowing = true, progress = 0 }: { label: s
   );
 }
 
-/* PC Info Panel — mini centered on right edge, expands to full system info dialog */
+/* PC Info Panel — uses real system detection */
 function PCInfoPanel() {
   const [expanded, setExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Global");
+  const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
+
+  useEffect(() => {
+    setSysInfo(detectSystemInfo());
+  }, []);
 
   const categories = [
     { id: "Global", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
@@ -103,23 +110,49 @@ function PCInfoPanel() {
     { id: "Processeur et Carte Mère", icon: <Cpu className="w-3.5 h-3.5 text-green-400" /> },
     { id: "Dispositif de Mémoire", icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" /> },
     { id: "Affichage", icon: <Monitor className="w-3.5 h-3.5 text-blue-400" /> },
-    { id: "Disques", icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" /> },
     { id: "Réseau", icon: <Wifi className="w-3.5 h-3.5 text-green-400" /> },
-    { id: "Autres périphériques", icon: <Usb className="w-3.5 h-3.5 text-muted-foreground" /> },
   ];
+
+  const osLabel = sysInfo ? `${sysInfo.os.name} ${sysInfo.os.version}` : "Detecting...";
+  const cpuLabel = sysInfo ? sysInfo.cpu.name : "Detecting...";
+  const gpuLabel = sysInfo ? sysInfo.gpu.renderer : "Detecting...";
+  const ramLabel = sysInfo?.ram.totalGB ? `${sysInfo.ram.totalGB} GB` : "N/A";
+  const displayLabel = sysInfo ? `${sysInfo.display.width} x ${sysInfo.display.height} (${sysInfo.display.pixelRatio}x)` : "Detecting...";
+  const networkLabel = sysInfo?.network.type ? `${sysInfo.network.type}${sysInfo.network.downlink ? ` (${sysInfo.network.downlink} Mbps)` : ""}` : "N/A";
+  const browserLabel = sysInfo ? `${sysInfo.browser.name} (${sysInfo.browser.language})` : "Detecting...";
 
   const systemInfo: Record<string, { icon: React.ReactNode; label: string; value: string }[]> = {
     Global: [
-      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Système d'exploitation", value: "Microsoft Windows 11 Professionnel" },
-      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz" },
-      { icon: <Monitor className="w-3.5 h-3.5 text-green-400" />, label: "Carte graphique", value: "NVIDIA GeForce RTX 3050 Ti Laptop GPU (4.0 G...)" },
-      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "Mémoire", value: "6.6 GB Gratuit (39.7 GB Total)" },
-      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Moniteur", value: "Moniteur Plug-and-Play générique (1920 x 1080 ...)" },
-      { icon: <HardDrive className="w-3.5 h-3.5 text-blue-400" />, label: "Disque de stockage", value: "2491.1 GB Gratuit (5706.6 GB Total)" },
-      { icon: <Volume2 className="w-3.5 h-3.5 text-blue-400" />, label: "Audio", value: "Technologie Intel® Smart Sound pour micropho..." },
-      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Carte mère", value: "Micro-Star International Co., Ltd. (MS-16R6)" },
-      { icon: <Mouse className="w-3.5 h-3.5 text-purple-400" />, label: "Souris", value: "Souris HID" },
-      { icon: <svg className="w-3.5 h-3.5 text-blue-400" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="5" width="12" height="7" rx="1" /><rect x="5" y="3" width="6" height="2" rx="0.5" /></svg>, label: "Clavier", value: "Clavier standard PS/2" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Système d'exploitation", value: osLabel },
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: cpuLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-green-400" />, label: "Carte graphique", value: gpuLabel },
+      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "Mémoire", value: ramLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Moniteur", value: displayLabel },
+      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Réseau", value: networkLabel },
+    ],
+    "Système d'Exploitation": [
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "OS", value: osLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Architecture", value: sysInfo?.os.architecture || "N/A" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Platform", value: sysInfo?.os.platform || "N/A" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Navigateur", value: browserLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Langue", value: sysInfo?.browser.language || "N/A" },
+    ],
+    "Processeur et Carte Mère": [
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Processeur", value: cpuLabel },
+      { icon: <Cpu className="w-3.5 h-3.5 text-green-400" />, label: "Cœurs logiques", value: sysInfo ? `${sysInfo.cpu.cores}` : "N/A" },
+    ],
+    "Dispositif de Mémoire": [
+      { icon: <MemoryStick className="w-3.5 h-3.5 text-green-400" />, label: "RAM", value: ramLabel },
+    ],
+    "Affichage": [
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "GPU", value: gpuLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Vendor", value: sysInfo?.gpu.vendor || "N/A" },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Résolution", value: displayLabel },
+      { icon: <Monitor className="w-3.5 h-3.5 text-blue-400" />, label: "Profondeur couleur", value: sysInfo ? `${sysInfo.display.colorDepth} bits` : "N/A" },
+    ],
+    "Réseau": [
+      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Type", value: sysInfo?.network.type || "N/A" },
+      { icon: <Wifi className="w-3.5 h-3.5 text-green-400" />, label: "Débit", value: sysInfo?.network.downlink ? `${sysInfo.network.downlink} Mbps` : "N/A" },
     ],
   };
 
@@ -131,23 +164,24 @@ function PCInfoPanel() {
         <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid hsl(220 10% 18%)" }}>
           <Monitor className="w-3.5 h-3.5 text-blue-400" />
           <span className="text-[10px] font-bold text-foreground tracking-wide uppercase">Infos sur le PC</span>
+          <span className="ml-auto text-[8px] text-green-400 font-bold">LIVE</span>
         </div>
         <div className="px-3 py-2 space-y-2">
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <Monitor className="w-3 h-3 text-blue-400 shrink-0" />
-            <span className="truncate">Microsoft Windows 11 Professi...</span>
+            <span className="truncate">{osLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <Cpu className="w-3 h-3 text-green-400 shrink-0" />
-            <span className="truncate">11th Gen Intel(R) Core(TM) i7-...</span>
+            <span className="truncate">{cpuLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <Monitor className="w-3 h-3 text-green-400 shrink-0" />
-            <span className="truncate">NVIDIA GeForce RTX 3050 Ti La...</span>
+            <span className="truncate">{gpuLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <MemoryStick className="w-3 h-3 text-blue-400 shrink-0" />
-            <span>39.7 GB</span>
+            <span>{ramLabel}</span>
           </div>
         </div>
         <button onClick={() => setExpanded(true)} className="w-full flex items-center justify-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors py-2 hover:bg-white/5" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
@@ -164,22 +198,20 @@ function PCInfoPanel() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in" onClick={() => setExpanded(false)}>
       <div className="w-[680px] max-h-[480px] rounded-lg overflow-hidden flex flex-col animate-scale-in" onClick={e => e.stopPropagation()}
         style={{ background: "hsl(220 16% 12%)", border: "1px solid hsl(220 10% 22%)" }}>
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 shrink-0" style={{ background: "hsl(220 14% 10%)", borderBottom: "1px solid hsl(220 10% 18%)" }}>
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
               <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 8H6v-1c0-1 .5-1.5 2-1.5s2 .5 2 1.5v1z"/></svg>
             </div>
-            <span className="text-xs font-bold text-foreground">Informations sur le système IObit</span>
+            <span className="text-xs font-bold text-foreground">Informations système (détection réelle)</span>
+            <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold">LIVE</span>
           </div>
           <button onClick={() => setExpanded(false)} className="p-1 rounded hover:bg-white/10 transition-colors">
             <X className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex flex-1 min-h-0">
-          {/* Left categories */}
           <div className="w-[180px] shrink-0 py-2 overflow-auto custom-scrollbar" style={{ background: "hsl(220 16% 11%)", borderRight: "1px solid hsl(220 10% 18%)" }}>
             {categories.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
@@ -190,7 +222,6 @@ function PCInfoPanel() {
             ))}
           </div>
 
-          {/* Right details */}
           <div className="flex-1 p-4 overflow-auto custom-scrollbar">
             <div className="space-y-1">
               {(systemInfo[selectedCategory] || systemInfo.Global).map((item, i) => (
@@ -204,12 +235,7 @@ function PCInfoPanel() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-4 py-3 shrink-0" style={{ borderTop: "1px solid hsl(220 10% 18%)" }}>
-          <button className="px-6 py-2 rounded text-xs font-bold transition-all duration-200 hover:bg-white/10"
-            style={{ background: "hsl(220 14% 16%)", border: "1px solid hsl(220 10% 25%)", color: "hsl(0 0% 80%)" }}>
-            Exportation...
-          </button>
           <button onClick={() => setExpanded(false)}
             className="bg-accent hover:bg-accent/90 text-accent-foreground text-xs font-bold px-6 py-2 rounded transition-all duration-200">
             Fermer
@@ -221,9 +247,9 @@ function PCInfoPanel() {
 }
 
 /* PRO Upgrade Modal — matches screenshot with guarantee badge and status bar */
-function ProUpgradeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function ProUpgradeModal({ open, onClose, drivers }: { open: boolean; onClose: () => void; drivers: Driver[] }) {
   if (!open) return null;
-  const proDrivers = outdatedDrivers.filter(d => d.isPro);
+  const proDrivers = drivers.filter(d => d.isPro);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in" onClick={onClose}>
       <div className="w-[600px] rounded-lg overflow-hidden flex animate-scale-in" onClick={e => e.stopPropagation()}
@@ -426,7 +452,6 @@ export function ScanPage() {
   const [progress, setProgress] = useState(0);
   const [currentDriver, setCurrentDriver] = useState("");
   const [showUpToDate, setShowUpToDate] = useState(false);
-  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set(outdatedDrivers.map(d => d.id)));
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showProModal, setShowProModal] = useState(false);
@@ -434,16 +459,25 @@ export function ScanPage() {
   const [selectedDetail, setSelectedDetail] = useState<Driver | null>(null);
   const [showProBanner, setShowProBanner] = useState(true);
 
+  // Dynamic driver data from Supabase
+  const [outdatedDrivers, setOutdatedDrivers] = useState<Driver[]>(fallbackOutdated);
+  const [upToDateDrivers, setUpToDateDrivers] = useState<string[]>(fallbackUpToDate);
+  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set(fallbackOutdated.map(d => d.id)));
+  const [dataSource, setDataSource] = useState<"local" | "cloud">("local");
+
   // Update simulation state
   const [updatingDrivers, setUpdatingDrivers] = useState<Map<string, number>>(new Map());
   const [updatedDrivers, setUpdatedDrivers] = useState<Set<string>>(new Set());
   const [currentUpdatingId, setCurrentUpdatingId] = useState<string | null>(null);
 
+  // Session ID for tracking
+  const sessionIdRef = useRef(crypto.randomUUID());
+
   const filteredOutdated = useMemo(() => {
     if (!searchQuery.trim()) return outdatedDrivers;
     const q = searchQuery.toLowerCase();
     return outdatedDrivers.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
-  }, [searchQuery]);
+  }, [searchQuery, outdatedDrivers]);
 
   const startScan = useCallback(() => {
     setScanState("scanning");
@@ -451,6 +485,47 @@ export function ScanPage() {
     setUpdatingDrivers(new Map());
     setUpdatedDrivers(new Set());
     setCurrentUpdatingId(null);
+
+    // Fetch real driver data from Supabase
+    const sysInfo = detectSystemInfo();
+    const keywords = getHardwareKeywords(sysInfo);
+    
+    supabase.functions.invoke('get-driver-info', {
+      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase() },
+    }).then(({ data, error }) => {
+      if (!error && data?.outdated) {
+        const drivers: Driver[] = data.outdated.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          category: d.category,
+          currentVersion: d.currentVersion,
+          currentDate: d.currentDate,
+          newVersion: d.newVersion,
+          newDate: d.newDate,
+          isPro: d.isPro,
+          icon: d.icon,
+        }));
+        setOutdatedDrivers(drivers);
+        setSelectedDrivers(new Set(drivers.map(d => d.id)));
+        setUpToDateDrivers(data.upToDate || fallbackUpToDate);
+        setDataSource("cloud");
+
+        // Log scan to history
+        supabase.from('scan_history').insert({
+          session_id: sessionIdRef.current,
+          os_detected: `${sysInfo.os.name} ${sysInfo.os.version}`,
+          cpu_detected: sysInfo.cpu.name,
+          gpu_detected: sysInfo.gpu.renderer,
+          ram_gb: sysInfo.ram.totalGB,
+          drivers_found: drivers.length + (data.upToDate?.length || 0),
+          outdated_count: drivers.length,
+          up_to_date_count: data.upToDate?.length || 0,
+        }).then(() => {});
+      }
+    }).catch(() => {
+      // Fallback to local data
+      setDataSource("local");
+    });
   }, []);
 
   const stopScan = useCallback(() => {
@@ -458,7 +533,7 @@ export function ScanPage() {
     setProgress(0);
   }, []);
 
-  // Scan progress
+  // Scan progress animation
   useEffect(() => {
     if (scanState !== "scanning") return;
     const interval = setInterval(() => {
@@ -618,6 +693,9 @@ export function ScanPage() {
             <span className="text-[13px] text-foreground">
               <span className="text-primary font-bold">{outdatedDrivers.length} device drivers</span> <span className="font-semibold">outdated</span>
             </span>
+            {dataSource === "cloud" && (
+              <span className="text-[8px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold ml-2">CLOUD</span>
+            )}
             <button onClick={() => { setScanState("idle"); setProgress(0); }}
               className="text-[11px] text-muted-foreground hover:text-foreground underline ml-2 transition-colors">
               Scan again
@@ -788,7 +866,7 @@ export function ScanPage() {
       <PCInfoPanel />
 
       {/* Modals */}
-      <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
+      <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} drivers={outdatedDrivers} />
       <ActivateModal open={showActivateModal} onClose={() => setShowActivateModal(false)} />
       {selectedDetail && <DriverDetailPanel driver={selectedDetail} onClose={() => setSelectedDetail(null)} />}
     </div>
