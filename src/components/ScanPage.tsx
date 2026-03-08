@@ -247,9 +247,9 @@ function PCInfoPanel() {
 }
 
 /* PRO Upgrade Modal — matches screenshot with guarantee badge and status bar */
-function ProUpgradeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function ProUpgradeModal({ open, onClose, drivers }: { open: boolean; onClose: () => void; drivers: Driver[] }) {
   if (!open) return null;
-  const proDrivers = outdatedDrivers.filter(d => d.isPro);
+  const proDrivers = drivers.filter(d => d.isPro);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in" onClick={onClose}>
       <div className="w-[600px] rounded-lg overflow-hidden flex animate-scale-in" onClick={e => e.stopPropagation()}
