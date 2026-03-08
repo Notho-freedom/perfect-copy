@@ -659,6 +659,7 @@ export function ScanPage() {
     const freeSelected = outdatedDrivers.filter(d => !d.isPro && selectedDrivers.has(d.id) && !updatedDrivers.has(d.id));
     if (freeSelected.length === 0) return;
     setScanState("updating");
+    updateStartTimeRef.current = Date.now();
     setCurrentUpdatingId(freeSelected[0].id);
   }, [selectedDrivers, updatedDrivers]);
 
@@ -824,6 +825,20 @@ export function ScanPage() {
           const currentProgress = currentUpdatingId ? (updatingDrivers.get(currentUpdatingId) || 0) : 0;
           const globalProgress = ((completedCount + currentProgress / 100) / totalDrivers) * 100;
           const currentName = freeSelected.find(d => d.id === currentUpdatingId)?.name || "";
+          // ETA calculation
+          const elapsed = (Date.now() - updateStartTimeRef.current) / 1000;
+          let etaLabel = "";
+          if (globalProgress > 2 && elapsed > 1) {
+            const totalEstimated = elapsed / (globalProgress / 100);
+            const remaining = Math.max(0, Math.ceil(totalEstimated - elapsed));
+            if (remaining >= 60) {
+              const m = Math.floor(remaining / 60);
+              const s = remaining % 60;
+              etaLabel = `~${m}m ${s}s restant`;
+            } else {
+              etaLabel = `~${remaining}s restant`;
+            }
+          }
           return (
             <div className="mx-5 mt-3 rounded-lg p-3 animate-fade-in" style={{ background: "hsl(220 14% 13%)", border: "1px solid hsl(220 10% 20%)" }}>
               <div className="flex items-center justify-between mb-2">
@@ -832,6 +847,9 @@ export function ScanPage() {
                   <span className="text-[11px] font-bold text-foreground">
                     Mise à jour en cours... {completedCount}/{totalDrivers}
                   </span>
+                  {etaLabel && (
+                    <span className="text-[10px] text-muted-foreground">— {etaLabel}</span>
+                  )}
                 </div>
                 <span className="text-[11px] font-bold text-primary">{Math.round(globalProgress)}%</span>
               </div>
