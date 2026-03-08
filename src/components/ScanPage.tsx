@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { outdatedDrivers as fallbackOutdated, upToDateDrivers as fallbackUpToDate, scanDriverNames, Driver } from "@/data/drivers";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronUp, Monitor, Volume2, Wifi, HardDrive, Mouse, Network, Usb, Info, Search, ChevronRight, X, Check, Crown, Shield, Zap, Star, ArrowLeft, RotateCcw, Trash2, EyeOff, Cpu, MemoryStick } from "lucide-react";
-import { detectSystemInfo, getHardwareKeywords, type SystemInfo } from "@/lib/systemDetection";
+import { detectSystemInfo, getHardwareKeywords, getGPUVendorHint, type SystemInfo } from "@/lib/systemDetection";
 import { supabase } from "@/integrations/supabase/client";
 
 type ScanState = "idle" | "scanning" | "results-list" | "updating" | "update-complete";
@@ -505,12 +505,13 @@ export function ScanPage() {
     setUpdatedDrivers(new Set());
     setCurrentUpdatingId(null);
 
-    // Fetch real driver data from Supabase
+    // Fetch real driver data from Supabase with contextual keywords
     const sysInfo = detectSystemInfo();
     const keywords = getHardwareKeywords(sysInfo);
+    const gpuVendor = getGPUVendorHint(sysInfo);
     
     supabase.functions.invoke('get-driver-info', {
-      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase() },
+      body: { hardware_keywords: keywords, os: sysInfo.os.name.toLowerCase(), gpu_vendor: gpuVendor },
     }).then(({ data, error }) => {
       if (!error && data?.outdated) {
         const drivers: Driver[] = data.outdated.map((d: any) => ({
@@ -523,6 +524,7 @@ export function ScanPage() {
           newDate: d.newDate,
           isPro: d.isPro,
           icon: d.icon,
+          matchConfidence: d.matchConfidence || 'generic',
         }));
         setOutdatedDrivers(drivers);
         setSelectedDrivers(new Set(drivers.map(d => d.id)));

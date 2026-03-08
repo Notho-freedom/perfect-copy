@@ -8,6 +8,7 @@ export interface Driver {
   newDate: string;
   isPro: boolean;
   icon: string;
+  matchConfidence?: 'exact' | 'partial' | 'generic';
 }
 
 export const outdatedDrivers: Driver[] = [
