@@ -108,9 +108,7 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Sidebar — centered vertically */}
-        <div className="w-[100px] shrink-0 flex flex-col items-center gap-1" style={{ background: "hsl(220 18% 8%)" }}>
-        <div className="w-[100px] shrink-0 flex flex-col items-center" style={{ background: "hsl(220 18% 8%)" }}>
+        {/* Sidebar */}
           {/* Hamburger — top */}
           <button
             onClick={() => setMenuOpen(true)}
