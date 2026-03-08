@@ -137,7 +137,7 @@ export function Layout({ currentPage, onPageChange, children }: LayoutProps) {
 
         {/* Main content with page transition */}
         <div className="flex-1 flex flex-col min-h-0 overflow-auto" style={{ background: "hsl(220 14% 12%)" }}>
-          <div className="flex-1 flex flex-col min-h-0 animate-fade-in" key={currentPage}>
+          <div className="flex-1 flex flex-col min-h-0">
             {children}
           </div>
         </div>
