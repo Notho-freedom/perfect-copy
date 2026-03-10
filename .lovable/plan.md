@@ -1,56 +1,89 @@
 
 
-# Driver Booster 13.1 — Exact Web Replica
+# Développement intégral de tous les outils de la page Tools
 
-A fully interactive web clone of IObit Driver Booster 13.1, replicating the dark UI, all sections, and simulated interactions.
+## Vue d'ensemble
 
-## Design & Theme
-- Dark theme matching Driver Booster's dark gray/black color scheme with red accent colors
-- Left sidebar navigation with icon + label items (Scan/Update, Boost, Tools, Action Center)
-- Top header bar with app title "Driver Booster 13.1", FREE badge, and window control icons
-- Hamburger menu opening a slide-out panel (Settings, Driver Update History, Check for Updates, User Manual, Technical Support, Skin selector, etc.)
+Transformer les 11 cartes statiques en systèmes interactifs complets, chacun avec sa propre vue détaillée, animations de progression, et logique simulée cohérente avec le style Driver Booster.
 
-## 1. Scan Page (Home)
-- Large circular **SCAN** button with red glow ring animation
-- Info banner: "Scan to check the status of drivers!"
-- On click: animated scanning state with circular progress bar, percentage counter, "Scanning..." text with current driver name cycling, and a **STOP** button
-- After scan completes: transitions to results view
+## Architecture
 
-## 2. Scan Results / Update Page
-- Alert banner: "X device drivers outdated" with "Scan again" link
-- "Update Now" red button at top
-- PRO upgrade upsell banner
-- List of outdated drivers with: checkbox, icon, driver name, category badge (PRO), current version date, available version date, individual "Update" button
-- "UpToDate (N)" collapsed section at the bottom
-- Large circular **UPDATE** button in the center
-- PC Info widget on the right side (OS, CPU, GPU, RAM, "Learn More")
+Chaque outil ouvre une vue dédiée (remplacement du contenu principal) avec un bouton retour. État géré localement dans `ToolsPage.tsx` via un state `activeTool`.
 
-## 3. Boost Page
-- Three cards side by side: **Game Boost**, **Internet Boost**, **System Optimize**
-- Each with a gauge/icon graphic, status indicator, action button (Super Boost / Boost Now / Check Now), and description text
-- Game Boost has a "Configure" link and ON/OFF gauge
+## Les 11 outils
 
-## 4. Tools Page
-- **Hot Fix Tools** section: cards for Backup & Restore, Fix No Sound, Fix Device Error (with issue count)
-- Right sidebar actions: Clean Invalid Device Data (with count), Fix Network Failure, Fix Bad Resolution
-- **Other Useful Tools** section: grid of tool cards — Fix Incompatible Drivers, Offline Driver Updater, System Information, Free & Fast VPN, Screen Recorder (with NEW badges)
+### Hot Fix Tools
 
-## 5. Action Center Page
-- Info banner: "Make PC safer and faster with the following programs recommended by IObit"
-- Hide link at top right
-- List of recommended apps (iTop VPN, iTop Screen Recorder, iTop Easy Desktop, Advanced SystemCare) each with: HOT badge, icon, name, description, orange "Install now" button
+**1. Backup & Restore**
+- Vue avec 2 onglets : **Backup** et **Restore**
+- Backup : liste les pilotes installés (réutilise `outdatedDrivers` + `upToDateDrivers`), bouton "Backup All", barre de progression animée, confirmation avec chemin fictif
+- Restore : liste des backups précédents (simulés avec dates), bouton restaurer par item
 
-## 6. Hamburger Menu (Slide-out)
-- Menu items: Settings, Driver Update History, Check for Updates, User Manual, Technical Support, Help Us Translate, What's New, About
-- **Skin** section at the bottom with theme preview thumbnail and color swatches
+**2. Fix No Sound**
+- Scan automatique au lancement (3 étapes animées) : vérification service audio, vérification pilotes audio, test de sortie
+- Affiche résultats avec icônes vert/orange/rouge
+- Bouton "Fix Issues" qui simule la réparation avec progression
 
-## 7. Bottom Promo Banner
-- Persistent promotional banner at the bottom with discount messaging and "Check It Out" / "Enter Code" actions
+**3. Fix Device Error (PRO)**
+- Badge PRO, scan des périphériques avec erreurs
+- Liste les erreurs détectées (codes d'erreur Windows simulés : Code 10, Code 28, Code 43)
+- Bouton "Fix All" grisé avec overlay PRO demandant l'upgrade
 
-## Interactions & Animations
-- Scan button: red glow pulse animation, click triggers scanning state
-- Scanning: circular progress animation with percentage, driver name cycling
-- Navigation between all sections via sidebar with active state highlighting
-- All buttons have hover effects
-- Simulated fake driver data (hardcoded list of realistic driver names, versions, dates)
+### Side Actions
+
+**4. Clean Invalid Device Data**
+- Scan animé détectant les entrées de registre orphelines
+- Liste avec checkboxes des devices invalides (59 items simulés groupés par catégorie)
+- Bouton "Clean Selected" avec barre de progression et compteur
+
+**5. Fix Network Failure**
+- Diagnostic réseau en 5 étapes : DNS, passerelle, adaptateur, TCP/IP, Winsock
+- Résultats avec statut par étape
+- Bouton "Repair" pour les items en échec
+
+**6. Fix Bad Resolution**
+- Détecte la résolution actuelle (via `screen.width/height` réel)
+- Affiche la résolution recommandée
+- Liste les résolutions disponibles, bouton "Apply" (simulé)
+
+### Other Useful Tools
+
+**7. Fix Incompatible Drivers**
+- Scan des pilotes incompatibles (cross-reference avec OS version)
+- Liste résultats avec badges de compatibilité
+- Bouton "Fix" par pilote
+
+**8. Offline Driver Updater**
+- 2 modes : **Export** (créer un pack de pilotes) et **Import** (charger un pack)
+- Export : sélection de pilotes, simulation de packaging avec progression
+- Import : zone de drop fictive, simulation d'installation
+
+**9. System Information**
+- Vue complète reprenant les données de `detectSystemInfoAsync()`
+- Onglets : OS, CPU, GPU, RAM, Stockage, Réseau, Audio, Carte mère
+- Bouton "Export to TXT" simulé
+- Réutilise les badges de fiabilité (Natif/Estimé) existants
+
+**10. Free & Fast VPN**
+- Page promotionnelle avec illustration
+- Bouton "Install iTop VPN" (lien externe simulé)
+- Features highlights : vitesse, sécurité, serveurs
+
+**11. Screen Recorder**
+- Page promotionnelle avec preview
+- Bouton "Install iTop Screen Recorder"
+- Features : enregistrement, webcam, édition
+
+## Fichiers modifiés
+
+| Fichier | Changement |
+|---|---|
+| `src/components/ToolsPage.tsx` | Refonte complète : state machine `activeTool`, rendu conditionnel des 11 sous-vues, composants internes pour chaque outil |
+
+## Patterns techniques
+
+- Chaque outil suit le pattern : Header avec bouton retour → Contenu avec scan/progression animé → Résultats → Action
+- Animations via `setInterval` pour les barres de progression (même pattern que le scan existant dans `ScanPage`)
+- Données simulées réalistes (noms de périphériques Windows réels, codes d'erreur, chemins de fichiers)
+- Style cohérent avec le reste de l'app (même palette `hsl(220...)`, mêmes classes `hover-lift`, `hover-glow`)
 
