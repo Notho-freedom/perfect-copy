@@ -1,5 +1,12 @@
 # Perfect Copy
 
+![Electron](https://img.shields.io/badge/Electron-desktop-47848F?logo=electron&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-backend-3ECF8E?logo=supabase&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-tests-6E9F18?logo=vitest&logoColor=white)
+
 ![Perfect Copy Screenshot](screenshots/homepage.png)
 
 ## Overview
@@ -26,28 +33,20 @@ Perfect Copy is an Electron desktop application built with React, Vite, TypeScri
 - **Vitest** - Testing framework
 
 ## Project Structure
-```
+```text
 perfect-copy/
-├── electron/           # Electron main process
-│   ├── main.cjs       # Main entry point
-│   ├── preload.cjs    # Preload script
-│   └── systemInfo.cjs # System information gathering
+├── electron/
+│   ├── main.cjs
+│   ├── preload.cjs
+│   └── systemInfo.cjs
 ├── src/
-│   ├── components/    # React components
-│   │   ├── ui/       # shadcn/ui components
-│   │   ├── BoostPage.tsx
-│   │   ├── ChatOverlay.tsx
-│   │   ├── DriverHistoryPanel.tsx
-│   │   ├── ScanPage.tsx
-│   │   ├── SettingsPage.tsx
-│   │   ├── ToolsPage.tsx
-│   │   └── WhatsNewPage.tsx
-│   ├── pages/        # Page components
-│   ├── hooks/        # Custom hooks
-│   ├── lib/          # Utilities
-│   └── integrations/ # Third-party integrations
-├── supabase/         # Supabase config and migrations
-└── doc/             # Documentation
+│   ├── components/
+│   ├── pages/
+│   ├── hooks/
+│   ├── lib/
+│   └── integrations/
+├── supabase/
+└── doc/
 ```
 
 ## Getting Started
@@ -55,7 +54,6 @@ perfect-copy/
 ### Prerequisites
 - Node.js 18+
 - npm or yarn
-- Electron
 
 ### Installation
 ```bash
