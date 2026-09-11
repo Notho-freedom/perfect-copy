@@ -1,73 +1,82 @@
-# Welcome to your Lovable project
+# Perfect Copy
 
-## Project info
+![Perfect Copy Screenshot](screenshots/homepage.png)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Overview
+Perfect Copy is an Electron desktop application built with React, Vite, TypeScript, and Supabase. It provides a modern desktop experience with system detection, driver management, and real-time data synchronization.
 
-## How can I edit this code?
+## Features
+- Electron desktop shell with native window controls
+- Real-time data synchronization via Supabase
+- Driver history tracking and management
+- Scan page for data inspection
+- System detection and information
+- Settings and tools pages
+- Auto-update mechanism
+- Modern UI with shadcn/ui components
 
-There are several ways of editing your application.
+## Technology Stack
+- **Electron** - Desktop application framework
+- **React 18** - UI library
+- **Vite** - Build tool and dev server
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **shadcn/ui** - Component library
+- **Supabase** - Backend, database, and real-time subscriptions
+- **Vitest** - Testing framework
 
-**Use Lovable**
+## Project Structure
+```
+perfect-copy/
+├── electron/           # Electron main process
+│   ├── main.cjs       # Main entry point
+│   ├── preload.cjs    # Preload script
+│   └── systemInfo.cjs # System information gathering
+├── src/
+│   ├── components/    # React components
+│   │   ├── ui/       # shadcn/ui components
+│   │   ├── BoostPage.tsx
+│   │   ├── ChatOverlay.tsx
+│   │   ├── DriverHistoryPanel.tsx
+│   │   ├── ScanPage.tsx
+│   │   ├── SettingsPage.tsx
+│   │   ├── ToolsPage.tsx
+│   │   └── WhatsNewPage.tsx
+│   ├── pages/        # Page components
+│   ├── hooks/        # Custom hooks
+│   ├── lib/          # Utilities
+│   └── integrations/ # Third-party integrations
+├── supabase/         # Supabase config and migrations
+└── doc/             # Documentation
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Electron
 
-**Use your preferred IDE**
+### Installation
+```bash
+git clone <repository-url>
+cd perfect-copy
+npm install
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Development
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Build
+```bash
+npm run build
+npm run build:electron
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Screenshots
+![Homepage](screenshots/homepage.png)
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## License
+MIT
